@@ -36,11 +36,11 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
       element: location
     };
     if (isText(el)) {
-      var history = el.data("togetherjsHistory");
-      if (history.current == value) {
-        return;
-      }
+      var history = el.data("togetherjsHistory");  // bug aqui!!!      
       if (history) {
+        if (history.current == value) {
+          return;
+        }
         var delta = ot.TextReplace.fromChange(history.current, value);
         assert(delta);
         history.add(delta);
@@ -346,10 +346,18 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
   }
 
   session.hub.on("form-update", function (msg) {
-    if (! msg.sameUrl) {
+    //if (! msg.sameUrl) {
+    //  return;
+    //}
+    var el;
+    try {
+      el = $(elementFinder.findElement(msg.element));
+    } 
+    catch(e) {
+      if (e instanceof elementFinder.CannotFind)
+        TogetherJS.emit('elementNotFound', msg.element, 'form');
       return;
-    }
-    var el = $(elementFinder.findElement(msg.element));
+    }    
     if (msg.tracker) {
       var tracker = getTracker(el, msg.tracker);
       assert(tracker);
@@ -483,8 +491,8 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
       try {
         el = elementFinder.findElement(update.element);
       } catch (e) {
-        /* skip missing element */
-        console.warn(e);
+        if (e instanceof elementFinder.CannotFind)
+          TogetherJS.emit('elementNotFound', update.element, 'form');
         return;
       }
       if (update.tracker) {
@@ -553,8 +561,16 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     if (! msg.element) {
       // A blur
       return;
-    }
-    var element = elementFinder.findElement(msg.element);
+    }    
+    var element;
+    try {
+      element = elementFinder.findElement(msg.element);
+    } 
+    catch(e) {
+      if (e instanceof elementFinder.CannotFind)
+        TogetherJS.emit('elementNotFound', msg.element, 'form');
+      return;
+    }    
     var el = createFocusElement(msg.peer, element);
     if (el) {
       focusElements[msg.peer.id] = el;

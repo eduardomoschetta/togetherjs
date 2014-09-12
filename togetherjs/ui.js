@@ -572,9 +572,11 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       setTimeout(function () {
         finishedAt = null;
         session.emit("ui-ready", ui);
+        TogetherJS.emit("ui-ready", ui);
       }, finishedAt - Date.now());
     } else {
       session.emit("ui-ready", ui);
+      TogetherJS.emit("ui-ready", ui);
     }
 
   }; // End ui.activateUI()

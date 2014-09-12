@@ -17,7 +17,8 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
   var SCROLL_UPDATE_CUTOFF = 2000;
 
   session.hub.on("cursor-update", function (msg) {
-    if (msg.sameUrl) {
+    //if (msg.sameUrl) {
+    if (true) {
       Cursor.getClient(msg.clientId).updatePosition(msg);
     } else {
       // FIXME: This should be caught even before the cursor-update message,
@@ -72,7 +73,7 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
                 width: 34,
                 height: 20,
                 padding: 12,
-                margin: 0
+                 margin: 0
             }, 200).animate({
                 width: 0,
                 height: 0,
@@ -103,7 +104,15 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
         this.atOtherUrl = false;
       }
       if (pos.element) {
-        var target = $(elementFinder.findElement(pos.element));
+        var target;
+        try {
+          target = $(elementFinder.findElement(pos.element));
+        } 
+        catch(e) {
+          if (e instanceof elementFinder.CannotFind)
+            TogetherJS.emit('elementNotFound', pos.element, 'cursor');
+          return;
+        }
         var offset = target.offset();
         top = offset.top + pos.offsetY;
         left = offset.left + pos.offsetX;
@@ -460,7 +469,8 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     // When the click is calculated isn't always the same as how the
     // last cursor update was calculated, so we force the cursor to
     // the last location during a click:
-    if (! pos.sameUrl) {
+    //if (! pos.sameUrl) {
+    if (false) {
       // FIXME: if we *could have* done a local click, but we follow along
       // later, we'll be in different states if that click was important.
       // Mostly click cloning just won't work.
@@ -468,7 +478,15 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     }
     Cursor.getClient(pos.clientId).updatePosition(pos);
     var element = templating.clone("click");
-    var target = $(elementFinder.findElement(pos.element));
+    var target;
+    try {
+      target = $(elementFinder.findElement(pos.element));
+    } 
+    catch(e) {
+      if (e instanceof elementFinder.CannotFind)
+        TogetherJS.emit('elementNotFound', pos.element, 'cursor');
+      return;
+    }
     var offset = target.offset();
     var top = offset.top + pos.offsetY;
     var left = offset.left + pos.offsetX;
