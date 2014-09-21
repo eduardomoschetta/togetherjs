@@ -27,6 +27,11 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     "#8A2BE2", "#7FFF00", "#DC143C", "#00FFFF", "#8FBC8F", "#FF8C00", "#FF00FF",
     "#FFD700", "#F08080", "#90EE90", "#FF6347"];
 
+  // new configs that affect the ui
+  var notifyUrlChange = TogetherJS.getConfig("notifyUrlChange");
+  var allowDifferentUrl = TogetherJS.getConfig("allowDifferentUrl");
+  var supressShare = TogetherJS.getConfig("supressShare");
+
   // This would be a circular import, but we just need the chat module sometime
   // after everything is loaded, and this is sure to complete by that time:
   require(["chat"], function (c) {
@@ -386,9 +391,14 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       });
     }
 
-    $("#togetherjs-share-button").click(function () {
-      windowing.toggle("#togetherjs-share");
-    });
+    if (supressShare) {
+      $('#togetherjs-dock').addClass('supress-share');
+      $("#togetherjs-share-button").remove();
+    } else {
+      $("#togetherjs-share-button").click(function () {
+        windowing.toggle("#togetherjs-share");
+      });
+    }
 
     $("#togetherjs-profile-button").click(function (event) {
       if ($.browser.mobile) {
@@ -890,17 +900,21 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         title: title,
         sameUrl: attrs.sameUrl
       });
-      el.find(".togetherjs-nudge").click(function () {
-        attrs.peer.nudge();
-        return false;
-      });
-      el.find(".togetherjs-follow").click(function () {
-        var url = attrs.peers.url;
-        if (attrs.peer.urlHash) {
-          url += attrs.peer.urlHash;
-        }
-        location.href = url;
-      });
+      if (allowDifferentUrl) {
+        el.find('.togetherjs-buttons').remove();
+      } else {
+        el.find(".togetherjs-nudge").click(function () {
+          attrs.peer.nudge();
+          return false;
+        });
+        el.find(".togetherjs-follow").click(function () {
+          var url = attrs.peers.url;
+          if (attrs.peer.urlHash) {
+            url += attrs.peer.urlHash;
+          }
+          location.href = url;
+        });
+      }
       var notify = ! attrs.sameUrl;
       if (attrs.sameUrl && ! $("#" + realId).length) {
         // Don't bother showing a same-url notification, if no previous notification
@@ -1131,7 +1145,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
     updateUrlDisplay: function (force) {
       var url = this.peer.url;
-      if ((! url) || (url == this._lastUpdateUrlDisplay && ! force)) {
+      if ((! notifyUrlChange) || (! url) || (url == this._lastUpdateUrlDisplay && ! force)) {
         return;
       }
       this._lastUpdateUrlDisplay = url;

@@ -462,7 +462,14 @@
     // This is used to keep sessions from crossing over on the same
     // domain, if for some reason you want sessions that are limited
     // to only a portion of the domain:
-    storagePrefix: "togetherjs"
+    storagePrefix: "togetherjs",
+    // If true, msg.sameUrl will always be true because we do not care
+    // whether users are at a different url or not
+    allowDifferentUrl: false,
+    // If true, the ui will show an alert about url change
+    notifyUrlChange: false,
+    // If true, the share button will not be provided
+    supressShare: false
   };
   // FIXME: there's a point at which configuration can't be updated
   // (e.g., hubBase after the TogetherJS has loaded).  We should keep

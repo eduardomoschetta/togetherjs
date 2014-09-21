@@ -17,8 +17,7 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
   var SCROLL_UPDATE_CUTOFF = 2000;
 
   session.hub.on("cursor-update", function (msg) {
-    //if (msg.sameUrl) {
-    if (true) {
+    if (msg.sameUrl) {
       Cursor.getClient(msg.clientId).updatePosition(msg);
     } else {
       // FIXME: This should be caught even before the cursor-update message,
@@ -469,8 +468,7 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     // When the click is calculated isn't always the same as how the
     // last cursor update was calculated, so we force the cursor to
     // the last location during a click:
-    //if (! pos.sameUrl) {
-    if (false) {
+    if (! pos.sameUrl) {
       // FIXME: if we *could have* done a local click, but we follow along
       // later, we'll be in different states if that click was important.
       // Mostly click cloning just won't work.

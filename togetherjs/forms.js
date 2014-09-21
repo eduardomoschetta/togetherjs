@@ -36,7 +36,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
       element: location
     };
     if (isText(el)) {
-      var history = el.data("togetherjsHistory");  // bug aqui!!!      
+      var history = el.data("togetherjsHistory");
       if (history) {
         if (history.current == value) {
           return;
@@ -346,9 +346,9 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
   }
 
   session.hub.on("form-update", function (msg) {
-    //if (! msg.sameUrl) {
-    //  return;
-    //}
+    if (! msg.sameUrl) {
+      return;
+    }
     var el;
     try {
       el = $(elementFinder.findElement(msg.element));
@@ -622,7 +622,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     $(document).off("focusout", blur);
   });
 
-  session.hub.on("hello", function (msg) {
+  session.hub.on("hello request-form-init", function (msg) {
     if (msg.sameUrl) {
       setTimeout(sendInit);
     }

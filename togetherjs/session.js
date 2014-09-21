@@ -118,7 +118,7 @@ define(["require", "util", "channels", "jquery", "storage"], function (require, 
         msg.peer.updateFromHello(msg);
       }
       if (msg.peer) {
-        msg.sameUrl = msg.peer.url == currentUrl;
+        msg.sameUrl = allowDifferentUrl || msg.peer.url == currentUrl;
         if (!msg.peer.isSelf) {
           msg.peer.updateMessageDate(msg);
         }
@@ -132,6 +132,8 @@ define(["require", "util", "channels", "jquery", "storage"], function (require, 
 
   // FIXME: once we start looking at window.history we need to update this:
   var currentUrl = (location.href + "").replace(/\#.*$/, "");
+
+  var allowDifferentUrl = TogetherJS.getConfig("allowDifferentUrl");
 
   session.send = function (msg) {
     if (DEBUG && IGNORE_MESSAGES.indexOf(msg.type) == -1) {
