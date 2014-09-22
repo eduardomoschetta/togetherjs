@@ -355,7 +355,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     } 
     catch(e) {
       if (e instanceof elementFinder.CannotFind)
-        TogetherJS.emit('elementNotFound', msg.element, 'form');
+        session.emit('dom-change', msg.element, 'form');
       return;
     }    
     if (msg.tracker) {
@@ -492,7 +492,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
         el = elementFinder.findElement(update.element);
       } catch (e) {
         if (e instanceof elementFinder.CannotFind)
-          TogetherJS.emit('elementNotFound', update.element, 'form');
+          session.emit('dom-change', update.element, 'form');
         return;
       }
       if (update.tracker) {
@@ -568,7 +568,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     } 
     catch(e) {
       if (e instanceof elementFinder.CannotFind)
-        TogetherJS.emit('elementNotFound', msg.element, 'form');
+        session.emit('dom-change', msg.element, 'form');
       return;
     }    
     var el = createFocusElement(msg.peer, element);

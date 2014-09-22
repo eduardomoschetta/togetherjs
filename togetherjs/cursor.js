@@ -102,14 +102,14 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
         this.element.show();
         this.atOtherUrl = false;
       }
-      if (pos.element) {
-        var target;
+      var target;
+      if (pos.element) {        
         try {
           target = $(elementFinder.findElement(pos.element));
         } 
         catch(e) {
           if (e instanceof elementFinder.CannotFind)
-            TogetherJS.emit('elementNotFound', pos.element, 'cursor');
+            session.emit('dom-change', pos.element, 'cursor');
           return;
         }
         var offset = target.offset();
@@ -309,8 +309,8 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     context.shadowBlur = 2;
     context.shadowOffsetX = 1;
     context.shadowOffsetY = 2;
-	context.strokeStyle = "#ffffff";
-	context.stroke();
+	  context.strokeStyle = "#ffffff";
+	  context.stroke();
     context.fill();
     return canvas[0].toDataURL("image/png");
   }
@@ -482,7 +482,7 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     } 
     catch(e) {
       if (e instanceof elementFinder.CannotFind)
-        TogetherJS.emit('elementNotFound', pos.element, 'cursor');
+        session.emit('dom-change', pos.element, 'cursor');
       return;
     }
     var offset = target.offset();

@@ -403,7 +403,7 @@
   };
 
   TogetherJS._mixinEvents(TogetherJS);
-  TogetherJS._knownEvents = ["ready", "close", "elementNotFound", "ui-ready"];
+  TogetherJS._knownEvents = ["ready", "close"];
   TogetherJS.toString = function () {
     return "TogetherJS";
   };

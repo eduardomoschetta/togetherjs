@@ -582,11 +582,9 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       setTimeout(function () {
         finishedAt = null;
         session.emit("ui-ready", ui);
-        TogetherJS.emit("ui-ready", ui);
       }, finishedAt - Date.now());
     } else {
       session.emit("ui-ready", ui);
-      TogetherJS.emit("ui-ready", ui);
     }
 
   }; // End ui.activateUI()
@@ -1274,7 +1272,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     },
 
     scrollTo: function () {
-      if (this.peer.url != session.currentUrl()) {
+      if ((! allowDifferentUrl) && (this.peer.url != session.currentUrl())) {
         return;
       }
       var pos = this.peer.scrollPosition;
@@ -1282,7 +1280,14 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         console.warn("Peer has no scroll position:", this.peer);
         return;
       }
-      pos = elementFinder.pixelForPosition(pos);
+      try {
+        pos = elementFinder.pixelForPosition(pos);
+      }
+      catch(e) {
+        if (e instanceof elementFinder.CannotFind)
+          session.emit('dom-change', pos.location, 'scroll');
+        return;
+      }
       $(document.body).easeTo(pos);
     },
 

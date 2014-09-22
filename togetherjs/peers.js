@@ -226,6 +226,10 @@ define(["util", "session", "storage", "require"], function (util, session, stora
   // FIXME: I can't decide where this should actually go, seems weird
   // that it is emitted and handled in the same module
   session.on("follow-peer", function (peer) {
+    if (TogetherJS.getConfig("allowDifferentUrl")) {
+      // in this scenario, follow is only applied for scroll updates
+      return;      
+    }
     if (peer.url != session.currentUrl()) {
       var url = peer.url;
       if (peer.urlHash) {
