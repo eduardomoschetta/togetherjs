@@ -1311,7 +1311,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
     maybeHideDetailWindow: function (windows) {
       if (this.detailElement && windows[0] && windows[0][0] === this.detailElement[0]) {
-        if (this.followCheckbox[0].checked) {
+        if (this.followCheckbox.length && this.followCheckbox[0].checked) {
           this.peer.follow();
         } else {
           this.peer.unfollow();
