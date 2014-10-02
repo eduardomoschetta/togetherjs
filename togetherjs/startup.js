@@ -113,6 +113,10 @@ define(["util", "require", "jquery", "windowing", "storage"], function (util, re
     },
 
     walkthrough: function (next) {
+      if (TogetherJS.getConfig('skipWalkthrough')) {
+        next();
+        return;
+      }
       storage.settings.get("seenIntroDialog").then(function (seenIntroDialog) {
         if (seenIntroDialog) {
           next();

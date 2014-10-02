@@ -469,7 +469,9 @@
     // If true, the ui will show an alert about url change
     notifyUrlChange: false,
     // If true, the share button will not be provided
-    supressShare: false
+    supressShare: false,
+    // If true, skip the walkthrough always
+    skipWalkthrough: false
   };
   // FIXME: there's a point at which configuration can't be updated
   // (e.g., hubBase after the TogetherJS has loaded).  We should keep
