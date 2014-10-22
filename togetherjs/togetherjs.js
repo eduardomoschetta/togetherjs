@@ -468,10 +468,10 @@
     allowDifferentUrl: false,
     // If true, the ui will show an alert about url change
     notifyUrlChange: false,
-    // If true, the share button will not be provided
-    supressShare: false,
     // If true, skip the walkthrough always
-    skipWalkthrough: false
+    skipWalkthrough: false,
+    // If not null, it allows an additional class to be added to UI container
+    addContainerClass: null
   };
   // FIXME: there's a point at which configuration can't be updated
   // (e.g., hubBase after the TogetherJS has loaded).  We should keep

@@ -30,7 +30,6 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
   // new configs that affect the ui
   var notifyUrlChange = TogetherJS.getConfig("notifyUrlChange");
   var allowDifferentUrl = TogetherJS.getConfig("allowDifferentUrl");
-  var supressShare = TogetherJS.getConfig("supressShare");
 
   // This would be a circular import, but we just need the chat module sometime
   // after everything is loaded, and this is sure to complete by that time:
@@ -112,6 +111,8 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     }
     var container = ui.container = $(templates["interface"]);
     assert(container.length);
+    if (TogetherJS.getConfig("addContainerClass"))
+      container.addClass(TogetherJS.getConfig("addContainerClass"));
     $("body").append(container);
     fixupAvatars(container);
     if (session.firstRun && TogetherJS.startTarget) {
@@ -391,14 +392,9 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       });
     }
 
-    if (supressShare) {
-      $('#togetherjs-dock').addClass('supress-share');
-      $("#togetherjs-share-button").remove();
-    } else {
-      $("#togetherjs-share-button").click(function () {
-        windowing.toggle("#togetherjs-share");
-      });
-    }
+    $("#togetherjs-share-button").click(function () {
+      windowing.toggle("#togetherjs-share");
+    });
 
     $("#togetherjs-profile-button").click(function (event) {
       if ($.browser.mobile) {
