@@ -16,6 +16,8 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
   // related hello-back message will be processed:
   var SCROLL_UPDATE_CUTOFF = 2000;
 
+  var uiStartedSync = false;
+
   session.hub.on("cursor-update", function (msg) {
     if (msg.sameUrl) {
       Cursor.getClient(msg.clientId).updatePosition(msg);
@@ -36,6 +38,8 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
       this.element.addClass(this.elementClass);
       this.updatePeer(peers.getPeer(clientId));
       this.lastTop = this.lastLeft = null;
+      if (!uiStartedSync)
+        this.element.hide();
       $(document.body).append(this.element);
       this.element.animateCursorEntry();
       this.keydownTimeout = null;
@@ -387,12 +391,18 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     }
   });
 
-  session.on("ui-ready", function () {
+  //session.on("ui-ready", function () {
+  session.on("ui-start-sync", function () {
+    uiStartedSync = true;
+    Cursor.forEach(function (c) {
+      c.element.show();
+    });
+
     $(document).mousemove(mousemove);
     document.addEventListener("click", documentClick, true);
     document.addEventListener("keydown", documentKeydown, true);
     $(window).scroll(scroll);
-    scroll();
+    scroll();    
   });
 
   session.on("close", function () {
