@@ -1208,6 +1208,10 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       iface.css({
         height: iface.height() + BUTTON_HEIGHT + "px"
       });
+      
+      if (TogetherJS.getConfig("hideParticipantDetails"))
+        return;
+
       this.detailElement = templating.sub("participant-window", {
         peer: this.peer
       });
@@ -1258,7 +1262,8 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       this.dockElement.animateDockExit().promise().then((function () {
         this.dockElement.remove();
         this.dockElement = null;
-        this.detailElement.remove();
+        if (this.detailElement)
+          this.detailElement.remove();
         this.detailElement = null;
         var iface = $("#togetherjs-dock");
         iface.css({
