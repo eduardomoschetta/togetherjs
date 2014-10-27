@@ -237,6 +237,11 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     // so abruptly
     var anchor = container.find("#togetherjs-dock-anchor");
     assert(anchor.length);
+
+    anchor.click(function(event) {
+      container.toggleClass('minimized');
+    });
+
     // FIXME: This is in place to temporarily disable dock dragging:
     anchor = container.find("#togetherjs-dock-anchor-disabled");
     anchor.mousedown(function (event) {
@@ -1253,6 +1258,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         }
       }).bind(this));
       this.updateFollow();
+      session.emit('dock-element');
     }),
 
     undock: function () {
@@ -1269,6 +1275,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         iface.css({
          height: (iface.height() - BUTTON_HEIGHT) + "px"
         });
+        session.emit('undock-element');
       }).bind(this));
     },
 

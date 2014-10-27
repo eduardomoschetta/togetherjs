@@ -37,8 +37,9 @@ define(["jquery", "util", "peers", "session"], function ($, util, peers, session
       getModalBackground().show();
       modalEscape.bind();
     }
+    resizeWindow(element);
     onClose = options.onClose || null;
-    session.emit("display-window", element.attr("id"), element);
+    session.emit("display-window", element.attr("id"));
   };
 
   var onClose = null;
@@ -191,6 +192,19 @@ define(["jquery", "util", "peers", "session"], function ($, util, peers, session
     return background;
   }
 
+  function resizeWindow(element) {
+    var dock = $("#togetherjs-dock");
+    var win;
+    if (!element) {
+      win = $(".togetherjs-window:visible");
+    } else {
+      win = $(element);
+      if (win.hasClass('togetherjs-modal') || win.hasClass('togetherjs-notification'))
+        return;
+    }
+    win.css('min-height', dock.height() + 'px');
+  }
+
   var modalEscape = {
     bind: function () {
       $(document).keydown(modalEscape.onKeydown);
@@ -212,6 +226,8 @@ define(["jquery", "util", "peers", "session"], function ($, util, peers, session
   session.on("new-element", function (el) {
     bindEvents(el);
   });
+
+  session.on("dock-element undock-element", resizeWindow);
 
   return windowing;
 });
