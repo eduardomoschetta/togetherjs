@@ -628,5 +628,19 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     }
   });
 
+  forms.requestFormInit = function() {
+    var msg = {
+      type: 'request-form-init',
+    };
+    session.send(msg);
+    
+    // if initSent is True, the peer will not
+    // process the next received form-init message...
+    // that does not make sense, since the peer is
+    // request a form init message :)
+    // that's the reason we reset this flag here.
+    initSent = false;
+  }
+
   return forms;
 });
