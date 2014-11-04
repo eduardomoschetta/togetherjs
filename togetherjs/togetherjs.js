@@ -463,6 +463,8 @@
     // domain, if for some reason you want sessions that are limited
     // to only a portion of the domain:
     storagePrefix: "togetherjs",
+    // Disable the lib autostart
+    noAutoStart: false,
     // If true, msg.sameUrl will always be true because we do not care
     // whether users are at a different url or not
     allowDifferentUrl: false,
