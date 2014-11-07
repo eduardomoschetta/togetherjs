@@ -306,6 +306,45 @@
     </section>
   </div>
 
+  <!-- The popup when user wants to share her screen -->
+  <div id="togetherjs-screenshare-confirm" class="togetherjs-window"
+       data-bind-to="#togetherjs-screenshare-button"
+       style="display: none">
+
+    <header> Screen sharing </header>
+    <section>
+      <p>
+        If you decide to proceed, you will be sharing this site's screen with the attendant
+        so she can watch where you are and what you are interacting with in order to better
+        support you.
+      </p>
+      <p>
+        Do you want to proceed?
+      </p>
+    </section>
+    <section class="togetherjs-buttons">
+      <button class="togetherjs-cancel togetherjs-dismiss">Cancel</button>
+      <span class="togetherjs-alt-text">or</span>
+      <button id="togetherjs-confirm-screenshare" class="togetherjs-default">Confirm</button>
+    </section>
+  </div>
+
+  <!-- The popup when user wants to share her screen -->
+  <div id="togetherjs-screenshare-active" class="togetherjs-window"
+       data-bind-to="#togetherjs-screenshare-button"
+       style="display: none">
+
+    <header> Screen sharing </header>
+    <section>
+      <p>
+        Your site's screen is already shared with the attendant.
+      </p>
+    </section>
+    <section class="togetherjs-buttons">
+      <button class="togetherjs-dismiss togetherjs-default">Ok</button>
+    </section>
+  </div>
+
   <!-- The popup when a chat message comes in and the #togetherjs-chat window isn't open -->
   <div id="togetherjs-chat-notifier" class="togetherjs-notification"
        data-bind-to="#togetherjs-chat-button"
