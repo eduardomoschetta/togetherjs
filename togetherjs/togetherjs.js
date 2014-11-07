@@ -474,8 +474,8 @@
     skipWalkthrough: false,
     // If not null, it allows an additional class to be added to UI container
     addContainerClass: null,
-    // If true, we will hide details about the participant
-    hideParticipantDetails: false
+    // If true, we will hide participants dock and their details
+    hideParticipants: false
   };
   // FIXME: there's a point at which configuration can't be updated
   // (e.g., hubBase after the TogetherJS has loaded).  We should keep

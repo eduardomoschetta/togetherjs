@@ -1132,10 +1132,12 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
     update: function () {
       if (! this.peer.isSelf) {
-        if (this.peer.status == "live") {
-          this.dock();
-        } else {
-          this.undock();
+        if (!TogetherJS.getConfig("hideParticipants")) {
+          if (this.peer.status == "live") {
+            this.dock();
+          } else {
+            this.undock();
+          }
         }
       }
       this.updateDisplay();
@@ -1213,9 +1215,6 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       iface.css({
         height: iface.height() + BUTTON_HEIGHT + "px"
       });
-      
-      if (TogetherJS.getConfig("hideParticipantDetails"))
-        return;
 
       this.detailElement = templating.sub("participant-window", {
         peer: this.peer
