@@ -462,7 +462,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     });
 
     $("#togetherjs-end-session").click(function () {
-      session.close();
+      session.close('user-closed');
       //$(".overlay").remove();
 
     });
