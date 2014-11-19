@@ -990,6 +990,27 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       }
     }),
 
+    add: deferForContainer(function (el, id, notify) {
+      if (id) {
+        el.attr("id", "togetherjs-chat-" + util.safeClassName(id));
+      }
+      var container = ui.container.find("#togetherjs-chat-messages");
+      assert(container.length);
+      var chatWindow = ui.container.find("#togetherjs-chat");
+      container.append(el);
+      ui.chat.scroll();
+      var doNotify = !! notify;
+      if (notify && visibilityApi.hidden()) {
+        ui.container.find("#togetherjs-notification")[0].play();
+      }
+      if (container.is(":visible")) {
+        doNotify = false;
+      }
+      if (doNotify) {
+        windowing.show(chatWindow);
+      }
+    }),
+
     scroll: deferForContainer(function () {
       var container = ui.container.find("#togetherjs-chat-messages")[0];
       container.scrollTop = container.scrollHeight;
