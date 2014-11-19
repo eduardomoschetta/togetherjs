@@ -947,6 +947,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
     hideTimeout: null,
 
+    /*
     add: deferForContainer(function (el, id, notify) {
       if (id) {
         el.attr("id", "togetherjs-chat-" + util.safeClassName(id));
@@ -989,7 +990,9 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         }
       }
     }),
+    */
 
+    // changed method of inserting chat to provide a different notification system
     add: deferForContainer(function (el, id, notify) {
       if (id) {
         el.attr("id", "togetherjs-chat-" + util.safeClassName(id));
