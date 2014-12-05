@@ -356,7 +356,7 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
 
   // FIXME: do the same thing for cursor position?  And give up on the
   // ad hoc update-on-hello?
-  session.on("prepare-hello", function (helloMessage) {
+  session.on("prepare-hello prepare-update-html", function (helloMessage) {
     if (lastScrollMessage) {
       helloMessage.scrollPosition = lastScrollMessage.position;
     }
@@ -391,7 +391,7 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     }
   });
 
-  //session.on("ui-ready", function () {
+  // session.on("ui-ready", function () {
   session.on("ui-start-sync", function () {
     uiStartedSync = true;
     Cursor.forEach(function (c) {
@@ -405,14 +405,19 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
     scroll();    
   });
 
+  session.on("ui-stop-sync", function () {
+    uiStartedSync = false;
+    Cursor.forEach(function (c) {
+      c.element.hide();
+    });
+    unbindEvents();
+  });
+
   session.on("close", function () {
     Cursor.forEach(function (c, clientId) {
       Cursor.destroy(clientId);
     });
-    $(document).unbind("mousemove", mousemove);
-    document.removeEventListener("click", documentClick, true);
-    document.removeEventListener("keydown", documentKeydown, true);
-    $(window).unbind("scroll", scroll);
+    unbindEvents();
   });
 
   session.hub.on("hello", function (msg) {
@@ -424,6 +429,13 @@ define(["jquery", "ui", "util", "session", "elementFinder", "tinycolor", "eventM
       session.send(lastScrollMessage);
     }
   });
+
+  function unbindEvents() {
+    $(document).unbind("mousemove", mousemove);
+    document.removeEventListener("click", documentClick, true);
+    document.removeEventListener("keydown", documentKeydown, true);
+    $(window).unbind("scroll", scroll);
+  }
 
   function documentClick(event) {
     if (event.togetherjsInternal) {

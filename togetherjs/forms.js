@@ -411,14 +411,9 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
 
   var initSent = false;
 
-  function sendInit() {
-    initSent = true;
-    var msg = {
-      type: "form-init",
-      pageAge: Date.now() - TogetherJS.pageLoaded,
-      updates: []
-    };
+  function getFormUpdates() {
     var els = $("textarea, input, select");
+    var updates = [];
     els.each(function () {
       if (elementFinder.ignoreElement(this) || elementTracked(this)) {
         return;
@@ -436,13 +431,23 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
           upd.basis = history.basis;
         }
       }
-      msg.updates.push(upd);
+      updates.push(upd);
     });
     liveTrackers.forEach(function (tracker) {
       var init = tracker.makeInit();
       assert(tracker.tracked(elementFinder.findElement(init.element)));
-      msg.updates.push(init);
+      updates.push(init);
     });
+    return updates;
+  }
+
+  function sendInit() {
+    initSent = true;
+    var msg = {
+      type: "form-init",
+      pageAge: Date.now() - TogetherJS.pageLoaded,
+      updates: getFormUpdates()
+    };
     if (msg.updates.length) {
       session.send(msg);
     }
@@ -485,8 +490,12 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
         return;
       }
     }
+    handleFormUpdates(msg.updates)
+  });
+
+  function handleFormUpdates(updates) {
     // FIXME: need to figure out when to ignore inits
-    msg.updates.forEach(function (update) {
+    updates.forEach(function (update) {
       var el;
       try {
         el = elementFinder.findElement(update.element);
@@ -526,7 +535,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
         }
       }
     });
-  });
+  }
 
   var lastFocus = null;
 
@@ -606,7 +615,8 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     return el;
   }
 
-  session.on("ui-ready", function () {
+  // session.on("ui-ready", function () {
+  session.on('ui-start-sync', function () {
     $(document).on("change", change);
     // note that textInput, keydown, and keypress aren't appropriate events
     // to watch, since they fire *before* the element's value changes.
@@ -615,32 +625,30 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     $(document).on("focusout", blur);
   });
 
-  session.on("close", function () {
+  session.on("close ui-stop-sync", function () {
     $(document).off("change", change);
     $(document).off("input keyup cut paste", maybeChange);
     $(document).off("focusin", focus);
     $(document).off("focusout", blur);
   });
 
-  session.hub.on("hello request-form-init", function (msg) {
-    if (msg.sameUrl) {
-      setTimeout(sendInit);
-    }
+  session.on("prepare-update-html", function(msg) {
+    msg.formUpdates = getFormUpdates();
+    initSent = true;
   });
 
-  forms.requestFormInit = function() {
-    var msg = {
-      type: 'request-form-init',
-    };
-    session.send(msg);
-    
-    // if initSent is True, the peer will not
-    // process the next received form-init message...
-    // that does not make sense, since the peer is
-    // request a form init message :)
-    // that's the reason we reset this flag here.
-    initSent = false;
-  }
+  session.on("handle-form-updates", function(msg) {
+    if (msg.formUpdates && msg.formUpdates.length)
+      handleFormUpdates(msg.formUpdates);
+  });
+
+  // disabled since we are sending form updates along with
+  // the update-html msg contents
+  // session.hub.on("hello", function (msg) {
+  //   if (msg.sameUrl) {
+  //     setTimeout(sendInit);
+  //   }
+  // });
 
   return forms;
 });
