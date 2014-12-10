@@ -412,6 +412,7 @@ define(["require", "util", "channels", "jquery", "storage"], function (require, 
   };
 
   session.close = function (reason) {
+    session.emit("before-close");
     TogetherJS.running = false;
     var msg = {type: "bye"};
     if (reason) {
