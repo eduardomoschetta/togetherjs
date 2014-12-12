@@ -39,7 +39,7 @@ define(["jquery", "util", "peers", "session"], function ($, util, peers, session
     }
     resizeWindow(element);
     onClose = options.onClose || null;
-    session.emit("display-window", element.attr("id"));
+    session.emit("display-window", element.attr("id"), element);
   };
 
   var onClose = null;
@@ -59,7 +59,6 @@ define(["jquery", "util", "peers", "session"], function ($, util, peers, session
     boundPos.height = bound.height();
     boundPos.width = bound.width();
     var windowHeight = $window.height();
-    var windowWidth = $window.width();
     boundPos.top -= $window.scrollTop();
     boundPos.left -= $window.scrollLeft();
     // FIXME: I appear to have to add the padding to the width to get a "true"

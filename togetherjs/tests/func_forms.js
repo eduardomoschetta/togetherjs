@@ -1,29 +1,30 @@
+/*global forms, session, ui, windowing, eventMaker */
 // =SECTION Setup
 
 $("#fixture").append('<textarea id="textarea" style="width: 10em; height: 3em;"></textarea>');
 $("#fixture").append('<br>');
 $("#fixture").append('<div><label for="yes"><input type="radio" name="answer" id="yes"> Yes</label><label for="no"><input type="radio" name="answer" id="no"> No</label></div>');
+$("#fixture").append('<input type="password" id="password" value="test">');
 
-Test.require("forms", "session", "ui", "windowing");
+Test.require("forms", "session", "ui", "windowing", "eventMaker", "templates-en-US");
 // => Loaded modules: ...
 
-printChained(
-  Test.resetSettings(),
-  Test.startTogetherJS(),
-  Test.closeWalkthrough());
+Test.normalStartup();
 // =>...
 
+var fireChange = eventMaker.fireChange;
 var $yes = $("#yes");
 var $no = $("#no");
 var $textarea = $("#textarea");
+var $password = $("#password");
 
-windowing.hide("#togetherjs-about");
+windowing.hide("#togetherjs-share");
 
 // =SECTION Changes
 
 Test.waitMessage("form-update");
 $yes.prop("checked", true);
-$yes.change();
+fireChange($yes);
 
 /* =>
 send: form-update
@@ -34,7 +35,7 @@ send: form-update
 
 Test.waitMessage("form-update");
 $no.prop("checked", true);
-$no.change();
+fireChange($no);
 
 /* =>
 send: form-update
@@ -42,6 +43,13 @@ send: form-update
   element: "#no",
   value: true
 */
+
+$password.val("New Password");
+fireChange($password);
+wait(100);
+
+/* =>
+ */
 
 function selection() {
   var start = $textarea[0].selectionStart;
@@ -65,7 +73,7 @@ function select(start, end) {
 
 Test.waitMessage("form-update");
 $textarea.val("hello");
-$textarea.change();
+fireChange($textarea);
 
 /* =>
 send: form-update
@@ -83,15 +91,18 @@ send: form-update
   "server-echo": true
 */
 
+$textarea.focus();
 select(3, 4);
 selection();
 
 Test.waitMessage("form-update");
 $textarea.val("hello there");
-$textarea.change();
+fireChange($textarea);
 
 /* =>
-send: form-focus...
+send: form-focus
+  clientId: "me",
+  element: "#textarea"
 selected 3 - 4
 send: form-update
   clientId: "me",
@@ -115,7 +126,7 @@ selection();
 
 Test.waitMessage("form-update");
 $textarea.val("hi there");
-$textarea.change();
+fireChange($textarea);
 
 /* =>
 selected ? - ?
@@ -136,13 +147,14 @@ send: form-update
 
 select(3, 4);
 
+Test.waitMessage("form-focus");
 Test.incoming({
   type: "hello",
   clientId: "faker",
   url: location.href.replace(/\#.*/, ""),
   urlHash: "",
   name: "Faker",
-  avatar: "about:blank",
+  avatar: TogetherJS.baseUrl + "/togetherjs/images/robot-avatar.png",
   color: "#ff0000",
   title: document.title,
   rtcSupported: false
@@ -160,12 +172,10 @@ Test.incoming({
     }
   }
 });
-wait(100);
 
 /* =>
 
 send: hello-back...
-send: form-focus...
 send: form-init
   clientId: "me",
   pageAge: ?,
@@ -184,6 +194,7 @@ send: form-init
       value: true
     }
   ]
+send: form-focus...
 */
 
 print($textarea.val());
@@ -206,7 +217,7 @@ Test.incoming({
     }
   }
 });
-wait(100);
+wait(function() { return $textarea.val()==='hELLO there'; });
 
 // =>
 

@@ -2,11 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-define(["util", "session", "storage", "require"], function (util, session, storage, require) {
+define(["util", "session", "storage", "require", "templates"], function (util, session, storage, require, templates) {
   var peers = util.Module("peers");
   var assert = util.assert;
   var CHECK_ACTIVITY_INTERVAL = 10*1000; // Every 10 seconds see if someone has gone idle
   var IDLE_TIME = 3*60*1000; // Idle time is 3 minutes
+  var TAB_IDLE_TIME = 2*60*1000; // When you tab away, after two minutes you'll say you are idle
   var BYE_TIME = 10*60*1000; // After 10 minutes of inactivity the person is considered to be "gone"
 
   var ui;
@@ -14,18 +15,7 @@ define(["util", "session", "storage", "require"], function (util, session, stora
     ui = uiModule;
   });
 
-  var DEFAULT_NICKNAMES = [
-    "Friendly Fox",
-    "Brilliant Beaver",
-	"Observant Owl",
-	"Gregarious Giraffe",
-	"Wild Wolf",
-	"Silent Seal",
-	"Wacky Whale",
-	"Curious Cat",
-	"Intelligent Iguana"
-  ];
-
+  var DEFAULT_NICKNAMES = templates("names").split(/,\s*/g);
   var Peer = util.Class({
 
     isSelf: false,
@@ -124,6 +114,7 @@ define(["util", "session", "storage", "require"], function (util, session, stora
         identityUpdated = true;
       }
       if (msg.avatar && msg.avatar != this.avatar) {
+        util.assertValidUrl(msg.avatar);
         this.avatar = msg.avatar;
         identityUpdated = true;
       }
@@ -279,6 +270,7 @@ define(["util", "session", "storage", "require"], function (util, session, stora
           }
         }
         if (attrs.avatar && attrs.avatar != this.avatar) {
+          util.assertValidUrl(attrs.avatar);
           this.avatar = attrs.avatar;
           updateMsg.avatar = this.avatar;
           if (! attrs.fromLoad) {
@@ -312,6 +304,7 @@ define(["util", "session", "storage", "require"], function (util, session, stora
         }
         this.view.update();
         if (updatePeers && ! attrs.fromLoad) {
+          session.emit("self-updated");
           session.send(updateMsg);
         }
         if (updateIdle && ! attrs.fromLoad) {
@@ -335,6 +328,7 @@ define(["util", "session", "storage", "require"], function (util, session, stora
           storage.settings.get("color")).then((function (name, avatar, defaultName, color) {
             if (! defaultName) {
               defaultName = util.pickRandom(DEFAULT_NICKNAMES);
+
               storage.settings.set("defaultName", defaultName);
             }
             if (! color) {
@@ -362,12 +356,16 @@ define(["util", "session", "storage", "require"], function (util, session, stora
       _loadFromApp: function () {
         // FIXME: I wonder if these should be optionally functions?
         // We could test typeof==function to distinguish between a getter and a concrete value
-        var getUserName = TogetherJS.getConfig("getUserName");
-        var getUserColor = TogetherJS.getConfig("getUserColor");
-        var getUserAvatar = TogetherJS.getConfig("getUserAvatar");
+        var getUserName = TogetherJS.config.get("getUserName");
+        var getUserColor = TogetherJS.config.get("getUserColor");
+        var getUserAvatar = TogetherJS.config.get("getUserAvatar");
         var name, color, avatar;
         if (getUserName) {
-          name = getUserName();
+          if (typeof getUserName == "string") {
+            name = getUserName;
+          } else {
+            name = getUserName();
+          }
           if (name && typeof name != "string") {
             // FIXME: test for HTML safe?  Not that we require it, but
             // <>'s are probably a sign something is wrong.
@@ -376,7 +374,11 @@ define(["util", "session", "storage", "require"], function (util, session, stora
           }
         }
         if (getUserColor) {
-          color = getUserColor();
+          if (typeof getUserColor == "string") {
+            color = getUserColor;
+          } else {
+            color = getUserColor();
+          }
           if (color && typeof color != "string") {
             // FIXME: would be nice to test for color-ness here.
             console.warn("Error in getUserColor(): should return a string (got", color, ")");
@@ -384,7 +386,11 @@ define(["util", "session", "storage", "require"], function (util, session, stora
           }
         }
         if (getUserAvatar) {
-          avatar = getUserAvatar();
+          if (typeof getUserAvatar == "string") {
+            avatar = getUserAvatar;
+          } else {
+            avatar = getUserAvatar();
+          }
           if (avatar && typeof avatar != "string") {
             console.warn("Error in getUserAvatar(): should return a string (got", avatar, ")");
             avatar = null;
@@ -403,8 +409,9 @@ define(["util", "session", "storage", "require"], function (util, session, stora
     peers.Self.view = ui.PeerView(peers.Self);
     storage.tab.get("peerCache").then(deserialize);
     peers.Self._loadFromSettings().then(function() {
-        peers.Self._loadFromApp();
-        peers.Self.view.update();
+      peers.Self._loadFromApp();
+      peers.Self.view.update();
+      session.emit("self-updated");
     });
   });
 
@@ -413,6 +420,21 @@ define(["util", "session", "storage", "require"], function (util, session, stora
       peers.Self._loadFromApp();
     }
   });
+
+  TogetherJS.config.track(
+    "getUserName",
+    TogetherJS.config.track(
+      "getUserColor",
+      TogetherJS.config.track(
+        "getUserAvatar",
+        function () {
+          if (peers.Self) {
+            peers.Self._loadFromApp();
+          }
+        }
+      )
+    )
+  );
 
   peers._SelfLoaded = util.Deferred();
 
@@ -435,7 +457,7 @@ define(["util", "session", "storage", "require"], function (util, session, stora
     });
   }
 
-  peers.getPeer = function getPeer(id, message) {
+  peers.getPeer = function getPeer(id, message, ignoreMissing) {
     assert(id);
     var peer = Peer.peers[id];
     if (id === session.clientId) {
@@ -444,6 +466,9 @@ define(["util", "session", "storage", "require"], function (util, session, stora
     if (message && ! peer) {
       peer = Peer(id, {fromHelloMessage: message});
       return peer;
+    }
+    if (ignoreMissing && !peer) {
+      return null;
     }
     assert(peer, "No peer with id:", id);
     if (message &&
@@ -503,11 +528,23 @@ define(["util", "session", "storage", "require"], function (util, session, stora
     checkActivityTask = null;
   });
 
+  var tabIdleTimeout = null;
+
   session.on("visibility-change", function (hidden) {
     if (hidden) {
-      peers.Self.update({idle: "inactive"});
+      if (tabIdleTimeout) {
+        clearTimeout(tabIdleTimeout);
+      }
+      tabIdleTimeout = setTimeout(function () {
+        peers.Self.update({idle: "inactive"});
+      }, TAB_IDLE_TIME);
     } else {
-      peers.Self.update({idle: "active"});
+      if (tabIdleTimeout) {
+        clearTimeout(tabIdleTimeout);
+      }
+      if (peers.Self.idle == "inactive") {
+        peers.Self.update({idle: "active"});
+      }
     }
   });
 

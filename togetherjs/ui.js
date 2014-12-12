@@ -10,6 +10,9 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
   var $window = $(window);
   // This is also in togetherjs.less, as @button-height:
   var BUTTON_HEIGHT = 60 + 1; // 60 is button height, 1 is border
+  // chat TextArea
+  var TEXTAREA_LINE_HEIGHT = 20; // in pixels
+  var TEXTAREA_MAX_LINES = 5;
   // This is also in togetherjs.less, under .togetherjs-animated
   var ANIMATION_DURATION = 1000;
   // Time the new user window sticks around until it fades away:
@@ -109,7 +112,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       });
       return;
     }
-    var container = ui.container = $(templates["interface"]);
+    var container = ui.container = $(templates("interface"));
     assert(container.length);
     if (TogetherJS.getConfig("addContainerClass"))
       container.addClass(TogetherJS.getConfig("addContainerClass"));
@@ -174,6 +177,17 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     ui.container.find(".togetherjs-window > header, .togetherjs-modal > header").each(function () {
       $(this).append($('<button class="togetherjs-close"></button>'));
     });
+
+    TogetherJS.config.track("disableWebRTC", function (hide, previous) {
+      if (hide && ! previous) {
+        ui.container.find("#togetherjs-audio-button").hide();
+        adjustDockSize(-1);
+      } else if ((! hide) && previous) {
+        ui.container.find("#togetherjs-audio-button").show();
+        adjustDockSize(1);
+      }
+    });
+
   };
 
   // After prepareUI, this actually makes the interface live.  We have
@@ -194,7 +208,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
     //create the overlay
     if($.browser.mobile) {
-      // $("body").append( "<div class='overlay' style='position: absolute; top: 0; left: 0; background-color: rgba(0,0,0,0); width: 120%; height: 100%; z-index: 1000; margin: -10px'></div>" );
+      // $("body").append( "\x3cdiv class='overlay' style='position: absolute; top: 0; left: 0; background-color: rgba(0,0,0,0); width: 120%; height: 100%; z-index: 1000; margin: -10px'>\x3c/div>" );
     }
 
     // The share link:
@@ -210,25 +224,49 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
     // The chat input element:
     var input = container.find("#togetherjs-chat-input");
-    input.bind("keyup", function (event) {
-      if (event.which == 13) { // Enter
+    input.bind("keydown", function (event) {
+      if (event.which == 13 && !event.shiftKey) { // Enter without Shift pressed
         submitChat();
         return false;
       }
       if (event.which == 27) { // Escape
         windowing.hide("#togetherjs-chat");
+        return false;
       }
-      return false;
     });
 
     function submitChat() {
       var val = input.val();
-      if (! val) {
-        return;
+      if ($.trim(val)) {
+        input.val("");
+        // triggering the event manually to avoid the addition of newline character to the textarea:
+        input.trigger("input").trigger("propertychange");
+        chat.submit(val);
       }
-      chat.submit(val);
-      input.val("");
     }
+    // auto-resize textarea:
+    input.on("input propertychange", function () {
+      var $this = $(this);
+      var actualHeight = $this.height();
+      // reset the height of textarea to remove trailing empty space (used for shrinking):
+      $this.height(TEXTAREA_LINE_HEIGHT);
+      this.scrollTop = 0;
+      // scroll to bottom:
+      this.scrollTop = 9999;
+      var newHeight = this.scrollTop + $this.height();
+      var maxHeight = TEXTAREA_MAX_LINES * TEXTAREA_LINE_HEIGHT;
+      if (newHeight > maxHeight) {
+        newHeight = maxHeight;
+        this.style.overflowY = "scroll";
+      } else {
+        this.style.overflowY = "hidden";
+      }
+      this.style.height = newHeight + "px";
+      var diff = newHeight - actualHeight;
+      $("#togetherjs-chat-input-box").height($("#togetherjs-chat-input-box").height() + diff);
+      $("#togetherjs-chat-messages").height($("#togetherjs-chat-messages").height() - diff);
+      return false;
+    });
 
     util.testExpose({submitChat: submitChat});
 
@@ -237,11 +275,6 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     // so abruptly
     var anchor = container.find("#togetherjs-dock-anchor");
     assert(anchor.length);
-
-    anchor.click(function(event) {
-      container.toggleClass('minimized');
-    });
-
     // FIXME: This is in place to temporarily disable dock dragging:
     anchor = container.find("#togetherjs-dock-anchor-disabled");
     anchor.mousedown(function (event) {
@@ -298,7 +331,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       $('#togetherjs-dock #togetherjs-buttons').animate({
         opacity: 1
       });
-      
+
       //for iphone
       if($(window).width() < 480) {
         $('.togetherjs-dock-right').animate({
@@ -319,7 +352,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
 
 
       // add bg overlay
-      // $("body").append( "<div class='overlay' style='position: absolute; top: 0; left: -2px; background-color: rgba(0,0,0,0.5); width: 200%; height: 400%; z-index: 1000; margin: 0px;'></div>" );
+      // $("body").append( "\x3cdiv class='overlay' style='position: absolute; top: 0; left: -2px; background-color: rgba(0,0,0,0.5); width: 200%; height: 400%; z-index: 1000; margin: 0px;'>\x3c/div>" );
 
       //disable vertical scrolling
       // $("body").css({
@@ -377,7 +410,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         windowing.toggle("#togetherjs-menu-window");
       });
 
-      // $("body").append( "<div class='overlay' style='position: absolute; top: 0; left: -2px; background-color: rgba(0,0,0,0.5); width: 200%; height: 400%; z-index: 1000; margin: 0px'></div>" );
+      // $("body").append( "\x3cdiv class='overlay' style='position: absolute; top: 0; left: -2px; background-color: rgba(0,0,0,0.5); width: 200%; height: 400%; z-index: 1000; margin: 0px'>\x3c/div>" );
 
       //disable vertical scrolling
       // $("body").css({
@@ -440,7 +473,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       $("#togetherjs-edit-name-window input").focus();
     });
 
-    $("#togetherjs-menu .togetherjs-self-name").bind("keyup", function (event) {
+    $("#togetherjs-menu .togetherjs-self-name").bind("keyup change", function (event) {
       if (event.which == 13) {
         ui.displayToggle("#togetherjs-self-name-display");
         return;
@@ -566,9 +599,13 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       }
     });
 
-    if (TogetherJS.getConfig("inviteFromRoom")) {
-      container.find("#togetherjs-invite").show();
-    }
+    TogetherJS.config.track("inviteFromRoom", function (inviter, previous) {
+      if (inviter) {
+        container.find("#togetherjs-invite").show();
+      } else {
+        container.find("#togetherjs-invite").hide();
+      }
+    });
 
     container.find("#togetherjs-menu-refresh-invite").click(refreshInvite);
     container.find("#togetherjs-menu-invite-anyone").click(function () {
@@ -748,6 +785,21 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     hideMenu();
   }
 
+  function adjustDockSize(buttons) {
+    /* Add or remove spots from the dock; positive number to
+       add button(s), negative number to remove button(s)
+       */
+    assert(typeof buttons == "number");
+    assert(buttons && Math.floor(buttons) == buttons);
+    var iface = $("#togetherjs-dock");
+    var newHeight = iface.height() + (BUTTON_HEIGHT * buttons);
+    assert(newHeight >= BUTTON_HEIGHT * 3, "Height went too low (", newHeight,
+           "), should never be less than 3 buttons high (", BUTTON_HEIGHT * 3, ")");
+    iface.css({
+      height: newHeight + "px"
+    });
+  }
+
   // Misc
 
   function updateShareLink() {
@@ -822,6 +874,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         assert(content.length);
         attrs.text = content.text() + "\n" + attrs.text;
         attrs.messageId = lastEl.attr("data-message-id");
+        lastEl.remove();
       }
       var el = templating.sub("chat-message", {
         peer: attrs.peer,
@@ -1069,6 +1122,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       container.find("." + this.peer.className("togetherjs-person-name-abbrev-")).text(abbrev);
       var avatarEl = container.find("." + this.peer.className("togetherjs-person-"));
       if (this.peer.avatar) {
+        util.assertValidUrl(this.peer.avatar);
         avatarEl.css({
           backgroundImage: "url(" + this.peer.avatar + ")"
         });
@@ -1193,39 +1247,40 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         peer: this.peer
       });
     },
-    
+
     // when there are too many participants in the dock, consolidate the participants to one avatar, and on mouseOver, the dock expands down to reveal the rest of the participants
     // if there are X users in the session
     // then hide the users in the dock
     // and shrink the size of the dock
     // and if you rollover the dock, it expands and reveals the rest of the participants in the dock
-    
+
     //if users hit X then show the participant button with the consol
 
     dock: deferForContainer(function () {
-      
-      var numberOfUsers = parseInt(peers.getAllPeers().length);
-      
+
+      var numberOfUsers = peers.getAllPeers().length;
+
       // collapse the Dock if too many users
-      function CollapsedDock() {  
+      function CollapsedDock() {
         // decrease/reset dock height
         $("#togetherjs-dock").css("height", 260);
         //replace participant button
-        $("#togetherjs-dock-participants").replaceWith("<button id='togetherjs-participantlist-button' class='togetherjs-button'><div class='togetherjs-tooltip togetherjs-dock-person-tooltip'><span class='togetherjs-person-name'>Participants</span><span class='togetherjs-person-tooltip-arrow-r'></span></div><div class='togetherjs-person togetherjs-person-status-overlay' title='Participant List' style='background-image: url(http://localhost:8888/images/robot-avatar.png); border-color: rgb(255, 0, 0);'></div></button>");
+        $("#togetherjs-dock-participants").replaceWith("<button id='togetherjs-participantlist-button' class='togetherjs-button'><div class='togetherjs-tooltip togetherjs-dock-person-tooltip'><span class='togetherjs-person-name'>Participants</span><span class='togetherjs-person-tooltip-arrow-r'></span></div><div class='togetherjs-person togetherjs-person-status-overlay' title='Participant List' style='background-image: url("+TogetherJS.baseUrl+"/togetherjs/images/robot-avatar.png); border-color: rgb(255, 0, 0);'></div></button>");
         // new full participant window created on toggle
         $("#togetherjs-participantlist-button").click(function () {
           windowing.toggle("#togetherjs-participantlist");
         });
       }
-      
-      if( numberOfUsers > 5 || numberOfUsers == 5) {
+
+      // FIXME: turned off for now
+      if( numberOfUsers >= 5 && false) {
         CollapsedDock();
       } else {
         // reset
-        
+
       }
-      
-      
+
+
       if (this.dockElement) {
         return;
       }
@@ -1235,11 +1290,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       this.dockElement.attr("id", this.peer.className("togetherjs-dock-element-"));
       ui.container.find("#togetherjs-dock-participants").append(this.dockElement);
       this.dockElement.find(".togetherjs-person").animateDockEntry();
-      var iface = $("#togetherjs-dock");
-      iface.css({
-        height: iface.height() + BUTTON_HEIGHT + "px"
-      });
-
+      adjustDockSize(1);
       this.detailElement = templating.sub("participant-window", {
         peer: this.peer
       });
@@ -1294,10 +1345,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         if (this.detailElement)
           this.detailElement.remove();
         this.detailElement = null;
-        var iface = $("#togetherjs-dock");
-        iface.css({
-         height: (iface.height() - BUTTON_HEIGHT) + "px"
-        });
+        adjustDockSize(-1);
         session.emit('undock-element');
       }).bind(this));
     },
@@ -1319,7 +1367,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
           session.emit('dom-change', pos.location, 'scroll');
         return;
       }
-      $(document.body).easeTo(pos);
+      $("html, body").easeTo(pos);
     },
 
     updateFollow: function () {
@@ -1376,7 +1424,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
   }
 
   function inviteHubUrl() {
-    var base = TogetherJS.getConfig("inviteFromRoom");
+    var base = TogetherJS.config.get("inviteFromRoom");
     assert(base);
     return util.makeUrlAbsolute(base, session.hubUrl());
   }
@@ -1477,7 +1525,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
   });
 
   session.on("new-element", function (el) {
-    if (TogetherJS.getConfig("toolName")) {
+    if (TogetherJS.config.get("toolName")) {
       ui.updateToolName(el);
     }
   });
@@ -1485,7 +1533,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
   var setToolName = false;
   ui.updateToolName = function (container) {
     container = container || $(document.body);
-    var name = TogetherJS.getConfig("toolName");
+    var name = TogetherJS.config.get("toolName");
     if (setToolName && ! name) {
       name = "TogetherJS";
     }
@@ -1494,6 +1542,10 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       setToolName = true;
     }
   };
+
+  TogetherJS.config.track("toolName", function (name) {
+    ui.updateToolName(ui.container);
+  });
 
   return ui;
 

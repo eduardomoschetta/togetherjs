@@ -12,6 +12,16 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
 
   var inRemoteUpdate = false;
 
+  function suppressSync(element) {
+    var ignoreForms = TogetherJS.config.get("ignoreForms");
+    if (ignoreForms === true) {
+      return true;
+    }
+    else {
+      return $(element).is(ignoreForms.join(",")); 
+    }
+  }
+
   function maybeChange(event) {
     // Called when we get an event that may or may not indicate a real change
     // (like keyup in a textarea)
@@ -22,20 +32,31 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
   }
 
   function change(event) {
+    sendData({
+      element: event.target,
+      value: getValue(event.target)
+    });
+  }
+
+  function sendData(attrs) {
+    var el = $(attrs.element);
+    assert(el);
+    var tracker = attrs.tracker;
+    var value = attrs.value;
     if (inRemoteUpdate) {
       return;
     }
-    if (elementFinder.ignoreElement(event.target) || elementTracked(event.target)) {
+    if (elementFinder.ignoreElement(el) ||
+        (elementTracked(el) && !tracker) ||
+        suppressSync(el)) {
       return;
     }
-    var el = $(event.target);
     var location = elementFinder.elementLocation(el);
-    var value = getValue(el);
     var msg = {
       type: "form-update",
       element: location
     };
-    if (isText(el)) {
+    if (isText(el) || tracker) {
       var history = el.data("togetherjsHistory");
       if (history) {
         if (history.current == value) {
@@ -44,7 +65,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
         var delta = ot.TextReplace.fromChange(history.current, value);
         assert(delta);
         history.add(delta);
-        maybeSendUpdate(msg.element, history);
+        maybeSendUpdate(msg.element, history, tracker);
         return;
       } else {
         msg.value = value;
@@ -94,14 +115,14 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     trackerName: "AceEditor",
 
     constructor: function (el) {
-      this.element = $(el);
-      assert(this.element.hasClass("ace_editor"));
+      this.element = $(el)[0];
+      assert($(this.element).hasClass("ace_editor"));
       this._change = this._change.bind(this);
       this._editor().document.on("change", this._change);
     },
 
     tracked: function (el) {
-      return this.element[0] === el;
+      return this.element === $(el)[0];
     },
 
     destroy: function (el) {
@@ -109,23 +130,23 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     },
 
     update: function (msg) {
-      this._editor().document.getDocument().applyDeltas([msg.delta]);
+      this._editor().document.setValue(msg.value);
     },
 
     init: function (update, msg) {
-      this._editor().document.setValue(update.value);
+      this.update(update);
     },
 
     makeInit: function () {
       return {
-        element: elementFinder.elementLocation(this.element),
+        element: this.element,
         tracker: this.trackerName,
         value: this._editor().document.getValue()
       };
     },
 
     _editor: function () {
-      return this.element[0].env;
+      return this.element.env;
     },
 
     _change: function (e) {
@@ -134,14 +155,15 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
       if (inRemoteUpdate) {
         return;
       }
-      // FIXME: I want to use a more normalized version of replace instead of
-      // ACE's native delta
-      session.send({
-        type: "form-update",
+      sendData({
         tracker: this.trackerName,
-        element: elementFinder.elementLocation(this.element),
-        delta: JSON.parse(JSON.stringify(e.data))
+        element: this.element,
+        value: this.getContent()
       });
+    },
+
+    getContent: function() {
+      return this._editor().document.getValue();
     }
   });
 
@@ -159,14 +181,14 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     trackerName: "CodeMirrorEditor",
 
     constructor: function (el) {
-      this.element = $(el);
-      assert(this.element[0].CodeMirror);
+      this.element = $(el)[0];
+      assert(this.element.CodeMirror);
       this._change = this._change.bind(this);
       this._editor().on("change", this._change);
     },
 
     tracked: function (el) {
-      return this.element[0] === el;
+      return this.element === $(el)[0];
     },
 
     destroy: function (el) {
@@ -174,19 +196,18 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     },
 
     update: function (msg) {
-      this._editor().replaceRange(
-        msg.change.text,
-        msg.change.from,
-        msg.change.to);
+      this._editor().setValue(msg.value);
     },
 
-    init: function (update, msg) {
-      this._editor().setValue(update.value);
+    init: function (msg) {
+      if (msg.value) {
+        this.update(msg);
+      }
     },
 
     makeInit: function () {
       return {
-        element: elementFinder.elementLocation(this.element),
+        element: this.element,
         tracker: this.trackerName,
         value: this._editor().getValue()
       };
@@ -196,27 +217,19 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
       if (inRemoteUpdate) {
         return;
       }
-      delete change.origin;
-      var next = change.next;
-      delete change.next;
-      if (Array.isArray(change.text)) {
-        // This seems to be version-specific with CodeMirror, but sometimes
-        // the text is an array of lines.
-        change.text = change.text.join("\n");
-      }
-      session.send({
-        type: "form-update",
+      sendData({
         tracker: this.trackerName,
-        element: elementFinder.elementLocation(this.element),
-        change: change
+        element: this.element,
+        value: this.getContent()
       });
-      if (next) {
-        this._change(editor, next);
-      }
     },
 
     _editor: function () {
-      return this.element[0].CodeMirror;
+      return this.element.CodeMirror;
+    },
+
+    getContent: function() {
+      return this._editor().getValue();
     }
   });
 
@@ -246,13 +259,187 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
 
   TogetherJS.addTracker(CodeMirrorEditor, true /* skip setInit */);
 
+  var CKEditor = util.Class({
+    trackerName: "CKEditor",
+
+    constructor: function (el) {
+      this.element = $(el)[0];
+      assert(CKEDITOR);
+      assert(CKEDITOR.dom.element.get(this.element));
+      this._change = this._change.bind(this);
+      // FIXME: change event is available since CKEditor 4.2
+      this._editor().on("change", this._change);
+    },
+    tracked: function (el) {
+      return this.element === $(el)[0];
+    },
+    destroy: function (el) {
+      this._editor().removeListener("change", this._change);
+    },
+
+    update: function (msg) {
+      //FIXME: use setHtml instead of setData to avoid frame reloading overhead
+      this._editor().editable().setHtml(msg.value);
+    },
+
+    init: function (update, msg) {
+      this.update(update);
+    },
+
+    makeInit: function () {
+      return {
+        element: this.element,
+        tracker: this.trackerName,
+        value: this.getContent()
+      };
+    },
+
+    _change: function (e) {
+      if (inRemoteUpdate) {
+        return;
+      }
+      sendData({
+        tracker: this.trackerName,
+        element: this.element,
+        value: this.getContent()
+      });
+    },
+
+    _editor: function () {
+      return CKEDITOR.dom.element.get(this.element).getEditor();
+    },
+    
+    getContent: function () {
+      return this._editor().getData();
+    }
+  });
+
+  CKEditor.scan = function () {
+    var result = [];
+    if (typeof CKEDITOR == "undefined") {
+      return;
+    }
+    var editorInstance;
+    for (var instanceIdentifier in CKEDITOR.instances) {
+      editorInstance = document.getElementById(instanceIdentifier) || document.getElementsByName(instanceIdentifier)[0];
+      if (editorInstance) {
+        result.push(editorInstance);
+      }
+    }
+    return $(result);
+  };
+
+  CKEditor.tracked = function (el) {
+    if (typeof CKEDITOR == "undefined") {
+      return false;
+    }
+    el = $(el)[0];
+    return !! (CKEDITOR.dom.element.get(el) && CKEDITOR.dom.element.get(el).getEditor());
+  };
+
+  TogetherJS.addTracker(CKEditor, true /* skip setInit */);
+
+  //////////////////// BEGINNING OF TINYMCE ////////////////////////
+  var tinymceEditor = util.Class({
+    trackerName: "tinymceEditor",
+
+    constructor: function (el) {
+      this.element = $(el)[0];
+      assert($(this.element).attr('id').indexOf('mce_') != -1);
+      this._change = this._change.bind(this);
+      this._editor().on("input keyup cut paste change", this._change);
+    },
+
+    tracked: function (el) {
+      return this.element === $(el)[0];
+    },
+
+    destroy: function (el) {
+      this._editor().destory();
+    },
+
+    update: function (msg) {
+      this._editor().setContent(msg.value, {format: 'raw'});
+    },
+
+    init: function (update, msg) {
+      this.update(update);
+    },
+
+    makeInit: function () {
+      return {
+        element: this.element,
+        tracker: this.trackerName,
+        value: this.getContent()
+      };
+    },
+
+    _change: function (e) {
+      if (inRemoteUpdate) {
+        return;
+      }  
+      sendData({
+        tracker: this.trackerName,
+        element: this.element,
+        value: this.getContent()
+      });
+    },
+
+    _editor: function () {
+      if (typeof tinymce == "undefined") {
+        return;
+      }
+      return $(this.element).data("tinyEditor");
+    },
+    
+    getContent: function () {
+      return this._editor().getContent();
+    }
+  });
+
+  tinymceEditor.scan = function () {
+    //scan all the elements that contain tinyMCE editors
+    if (typeof tinymce == "undefined") {
+      return;
+    }
+    var result = [];
+    $(window.tinymce.editors).each(function (i, ed) {
+      result.push($('#'+ed.id));
+      //its impossible to retrieve a single editor from a container, so lets store it
+      $('#'+ed.id).data("tinyEditor", ed);
+    });
+    return $(result);
+  };
+
+  tinymceEditor.tracked = function (el) {
+    if (typeof tinymce == "undefined") {
+      return false;
+    }
+    el = $(el)[0];
+    return !!$(el).data("tinyEditor");
+    /*var flag = false;
+    $(window.tinymce.editors).each(function (i, ed) {
+      if (el.id == ed.id) {
+        flag = true;
+      }
+    });
+    return flag;*/
+  };
+
+  TogetherJS.addTracker(tinymceEditor, true);
+  ///////////////// END OF TINYMCE ///////////////////////////////////
+
   function buildTrackers() {
     assert(! liveTrackers.length);
     util.forEachAttr(editTrackers, function (TrackerClass) {
       var els = TrackerClass.scan();
-      $.each(els, function () {
-        liveTrackers.push(new TrackerClass(this));
-      });
+      if (els) {
+        $.each(els, function () {
+          var tracker = new TrackerClass(this);
+          $(this).data("togetherjsHistory", ot.SimpleHistory(session.clientId, tracker.getContent(), 1));
+          liveTrackers.push(tracker);
+        });
+      }
     });
   }
 
@@ -278,6 +465,9 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     for (var i=0; i<liveTrackers.length; i++) {
       var tracker = liveTrackers[i];
       if (tracker.tracked(el)) {
+        //FIXME: assert statement below throws an exception when data is submitted to the hub too fast
+        //in other words, name == tracker.trackerName instead of name == tracker when someone types too fast in the tracked editor
+        //commenting out this assert statement solves the problem
         assert((! name) || name == tracker.trackerName, "Expected to map to a tracker type", name, "but got", tracker.trackerName);
         return tracker;
       }
@@ -311,18 +501,43 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     }
   }
 
+  function getElementType(el) {
+    el = $(el)[0];
+    if (el.tagName == "TEXTAREA") {
+      return "textarea";
+    }
+    if (el.tagName == "SELECT") {
+      return "select";
+    }
+    if (el.tagName == "INPUT") {
+      return (el.getAttribute("type") || "text").toLowerCase();
+    }
+    return "?";
+  }
+
   function setValue(el, value) {
     el = $(el);
+    var changed = false;
     if (isCheckable(el)) {
-      el.prop("checked", value);
+      var checked = !! el.prop("checked");
+      value = !! value;
+      if (checked != value) {
+        changed = true;
+        el.prop("checked", value);
+      }
     } else {
-      el.val(value);
+      if (el.val() != value) {
+        changed = true;
+        el.val(value);
+      }
     }
-    eventMaker.fireChange(el);
+    if (changed) {
+      eventMaker.fireChange(el);
+    }
   }
 
   /* Send the top of this history queue, if it hasn't been already sent. */
-  function maybeSendUpdate(element, history) {
+  function maybeSendUpdate(element, history, tracker) {
     var change = history.getNextToSend();
     if (! change) {
       /* nothing to send */
@@ -342,6 +557,9 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
         }
       }
     };
+    if (tracker) {
+      msg.tracker = tracker;
+    }
     session.send(msg);
   }
 
@@ -358,20 +576,18 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
         session.emit('dom-change', msg.element, 'form');
       return;
     }    
+    var tracker;
     if (msg.tracker) {
-      var tracker = getTracker(el, msg.tracker);
+      tracker = getTracker(el, msg.tracker);
       assert(tracker);
-      inRemoteUpdate = true;
-      try {
-        tracker.update(msg);
-      } finally {
-        inRemoteUpdate = false;
-      }
-      return;
     }
-    var text = isText(el);
+    var focusedEl = el[0].ownerDocument.activeElement;
+    var focusedElSelection;
+    if (isText(focusedEl)) {
+      focusedElSelection = [focusedEl.selectionStart, focusedEl.selectionEnd];
+    }
     var selection;
-    if (text) {
+    if (isText(el)) {
       selection = [el[0].selectionStart, el[0].selectionEnd];
     }
     var value;
@@ -388,7 +604,11 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
                                          msg.replace.delta.text);
       // apply this change to the history
       var changed = history.commit(msg.replace);
-      maybeSendUpdate(msg.element, history);
+      var trackerName = null;
+      if (typeof tracker != "undefined") {
+        trackerName = tracker.trackerName;
+      }
+      maybeSendUpdate(msg.element, history, trackerName);
       if (! changed) {
         return;
       }
@@ -399,10 +619,22 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     }
     inRemoteUpdate = true;
     try {
-      setValue(el, value);
-      if (text) {
+      if(tracker) {
+        tracker.update({value:value});
+      } else {
+        setValue(el, value);
+      }
+      if (isText(el)) {
         el[0].selectionStart = selection[0];
         el[0].selectionEnd = selection[1];
+      }
+      // return focus to original input:
+      if (focusedEl != el[0]) {
+        focusedEl.focus();
+        if (isText(focusedEl)) {
+          focusedEl.selectionStart = focusedElSelection[0];
+          focusedEl.selectionEnd = focusedElSelection[1];
+        }
       }
     } finally {
       inRemoteUpdate = false;
@@ -415,13 +647,15 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     var els = $("textarea, input, select");
     var updates = [];
     els.each(function () {
-      if (elementFinder.ignoreElement(this) || elementTracked(this)) {
+      if (elementFinder.ignoreElement(this) || elementTracked(this) ||
+          suppressSync(this)) {
         return;
       }
       var el = $(this);
       var value = getValue(el);
       var upd = {
         element: elementFinder.elementLocation(this),
+        //elementType: getElementType(el), // added in 5cbb88c9a but unused
         value: value
       };
       if (isText(el)) {
@@ -435,7 +669,13 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     });
     liveTrackers.forEach(function (tracker) {
       var init = tracker.makeInit();
-      assert(tracker.tracked(elementFinder.findElement(init.element)));
+      assert(tracker.tracked(init.element));
+      var history = $(init.element).data("togetherjsHistory");
+      if (history) {
+        init.value = history.committed;
+        init.basis = history.basis;
+      }
+      init.element = elementFinder.elementLocation($(init.element));
       updates.push(init);
     });
     return updates;
@@ -504,35 +744,30 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
           session.emit('dom-change', update.element, 'form');
         return;
       }
-      if (update.tracker) {
-        var tracker = getTracker(el, update.tracker);
-        assert(tracker);
-        inRemoteUpdate = true;
-        try {
+      inRemoteUpdate = true;
+      try {
+        if (update.tracker) {
+          var tracker = getTracker(el, update.tracker);
+          assert(tracker);
           tracker.init(update, msg);
-        } finally {
-          inRemoteUpdate = false;
-        }
-      } else {
-        inRemoteUpdate = true;
-        try {
+        } else {
           setValue(el, update.value);
-          if (update.basis) {
-            var history = $(el).data("togetherjsHistory");
-            // don't overwrite history if we're already up to date
-            // (we might have outstanding queued changes we don't want to lose)
-            if (!(history && history.basis === update.basis &&
-                  // if history.basis is 1, the form could have lingering
-                  // edits from before togetherjs was launched.  that's too bad,
-                  // we need to erase them to resynchronize with the peer
-                  // we just asked to join.
-                  history.basis !== 1)) {
-              $(el).data("togetherjsHistory", ot.SimpleHistory(session.clientId, update.value, update.basis));
-            }
-          }
-        } finally {
-          inRemoteUpdate = false;
         }
+        if (update.basis) {
+          var history = $(el).data("togetherjsHistory");
+          // don't overwrite history if we're already up to date
+          // (we might have outstanding queued changes we don't want to lose)
+          if (!(history && history.basis === update.basis &&
+                // if history.basis is 1, the form could have lingering
+                // edits from before togetherjs was launched.  that's too bad,
+                // we need to erase them to resynchronize with the peer
+                // we just asked to join.
+                history.basis !== 1)) {
+            $(el).data("togetherjsHistory", ot.SimpleHistory(session.clientId, update.value, update.basis));
+          }
+        }
+      } finally {
+        inRemoteUpdate = false;
       }
     });
   }
@@ -541,7 +776,7 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
 
   function focus(event) {
     var target = event.target;
-    if (elementFinder.ignoreElement(target)) {
+    if (elementFinder.ignoreElement(target) || elementTracked(target)) {
       blur(event);
       return;
     }
@@ -562,6 +797,9 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
   var focusElements = {};
 
   session.hub.on("form-focus", function (msg) {
+    if (! msg.sameUrl) {
+      return;
+    }
     var current = focusElements[msg.peer.id];
     if (current) {
       current.remove();
@@ -583,16 +821,6 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
     var el = createFocusElement(msg.peer, element);
     if (el) {
       focusElements[msg.peer.id] = el;
-    }
-  });
-
-  session.hub.on("hello", function (msg) {
-    if (lastFocus) {
-      setTimeout(function () {
-        if (lastFocus) {
-          session.send({type: "form-focus", element: elementFinder.elementLocation(lastFocus)});
-        }
-      });
     }
   });
 
@@ -642,13 +870,18 @@ define(["jquery", "util", "session", "elementFinder", "eventMaker", "templating"
       handleFormUpdates(msg.formUpdates);
   });
 
-  // disabled since we are sending form updates along with
-  // the update-html msg contents
-  // session.hub.on("hello", function (msg) {
-  //   if (msg.sameUrl) {
-  //     setTimeout(sendInit);
-  //   }
-  // });
+  session.hub.on("hello", function (msg) {
+    if (msg.sameUrl) {
+      setTimeout(function () {
+        // disabled since we are sending form updates along with
+        // the update-html msg contents (browserwatch)
+        // sendInit();
+        if (lastFocus) {
+          session.send({type: "form-focus", element: elementFinder.elementLocation(lastFocus)});
+        }
+      });
+    }
+  });
 
   return forms;
 });

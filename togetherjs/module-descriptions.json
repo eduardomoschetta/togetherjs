@@ -2,10 +2,11 @@
   "analytics": "A small bit of code for handling Google Analytics",
   "channels": "An abstraction over WebSockets and other communication channels (like `postMessage`).",
   "chat": "Handles the chat messages (except actual display, which is in `ui.js`).",
+  "console": "An console replacement that collects messages and allows TogetherJS-specific log levels",
   "cursor": "Handles the shared cursors, display and capturing the events.  Also handles clicks and scrolls.  Includes UI.",
   "elementFinder": "Generates something like a CSS selector for an element, and finds said elements based on selectors.  A portable description of an element.",
   "eventMaker": "Creates artificial events, like a fake click event.",
-  "forms": "Handles synchronization of forms, including CodeMirror and ACE support.  Implements a portion of OT.",
+  "forms": "Handles synchronization of forms, including CodeMirror, ACE, CKEditor and tinyMCE Editor support.  Implements a portion of OT.",
   "jqueryPlugins": "Some plugins for jQuery; doesn't export anything, just patches `$`.",
   "linkify": "Detects and adds links to plain text.",
   "ot": "Operational transformation support: what keeps big chunks of text in sync when multiple people are simultaneously editing those fields.",
@@ -21,8 +22,11 @@
   "togetherjs": "This is the bootstrap code.  It is included on all pages, defines the `TogetherJS` variable, and handles configuration and initial loading.",
   "ui": "This has most of the UI, meaning everything involving HTML, and reacting to that interface.",
   "util": "Lots of support code in here.  It doesn't depend on other things, and has fairly abstract general-purpose code.  It includes a pattern for creating classes, assertions, events.",
+  "videos.js": "Support for the video sync feature",
   "visibilityApi": "Handles cross-browser tab visibility events",
   "walkthrough": "Implements the walkthrough interface (content is in `walkthrough.html`).",
   "webrtc": "Handles live audio chat.",
-  "windowing": "Handles the creation of different windows, notifications, and modal windows."
+  "who": "Lets clients peek into rooms and invite people from those rooms without joining the room",
+  "windowing": "Handles the creation of different windows, notifications, and modal windows.",
+  "youtubeVideos": "Support for the YouTube video sync feature"
 }

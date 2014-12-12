@@ -2,13 +2,10 @@
 
 $("#other").remove();
 
-Test.require("ui", "chat", "util", "session", "jquery", "storage", "peers", "cursor", "windowing");
+Test.require("ui", "chat", "util", "session", "jquery", "storage", "peers", "cursor", "windowing", "templates-en-US");
 // => Loaded modules: ...
 
-printChained(
-  Test.resetSettings(),
-  Test.startTogetherJS(),
-  Test.closeWalkthrough());
+Test.normalStartup();
 
 /* =>
 Settings reset
@@ -131,6 +128,7 @@ print($("#togetherjs-menu .togetherjs-self-name").is(":visible"));
 // => true
 $("#togetherjs-menu .togetherjs-self-name").val("Joe");
 // First we do a keyup to trigger the change event:
+
 $("#togetherjs-menu .togetherjs-self-name").trigger("keyup");
 // Then we submit:
 $("#togetherjs-menu .togetherjs-self-name").trigger($.Event("keyup", {which: 13}));

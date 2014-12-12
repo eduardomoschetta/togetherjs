@@ -5,13 +5,33 @@ var Test = {};
 /* Loads the modules that are listed as individual arguments, and adds
    them to the global scope.  Blocks on the loading.  Use like:
 
-   Test.require("foo", "bar");
-   // => ...
-   foo.someFunction()...
+       Test.require("foo", "bar");
+       // => ...
+       foo.someFunction()...
+
+   If you want to alias something, do:
+
+       Test.require({myConsole: "console"})
+       // => ...
+       myConsole.log()
 */
 Test.require = function () {
   var done = false;
-  var modules = Array.prototype.slice.call(arguments);
+  var args = Array.prototype.slice.call(arguments);
+  var modules = [];
+  var aliases = {};
+  args.forEach(function (m) {
+    if (typeof m == "object") {
+      for (var alias in m) {
+        if (m.hasOwnProperty(alias)) {
+          modules.push(m[alias]);
+          aliases[m[alias]] = alias;
+        }
+      }
+    } else {
+      modules.push(m);
+    }
+  });
 
   function loadModules() {
     if (! modules.length) {
@@ -21,7 +41,8 @@ Test.require = function () {
     }
     TogetherJS.require(modules, function () {
       for (var i=0; i<modules.length; i++) {
-        window[modules[i]] = arguments[i];
+        var localName = aliases[modules[i]] || modules[i];
+        window[localName] = arguments[i];
       }
       var msg = ["Loaded modules:"].concat(modules);
       print.apply(null, msg);
@@ -98,7 +119,7 @@ Test.newPeer = function (options) {
     isClient: false,
     clientId: options.clientId || "faker",
     name: options.name || "Faker",
-    avatar: options.avatar || TogetherJS.baseUrl + "/images/robot-avatar.png",
+    avatar: options.avatar || TogetherJS.baseUrl + "/togetherjs/images/robot-avatar.png",
     color: options.color || "#ff0000",
     url: options.url || location.href.replace(/#.*/, ""),
     urlHash: options.urlHash || "",
@@ -129,7 +150,8 @@ Test.resetSettings = function () {
       storage.settings.set("color", "#00ff00"),
       storage.settings.set("seenIntroDialog", undefined),
       storage.settings.set("seenWalkthrough", undefined),
-      storage.settings.set("dontShowRtcInfo", undefined)
+      storage.settings.set("dontShowRtcInfo", undefined),
+      storage.tab.set("chatlog", undefined)
     ).then(function () {
       def.resolve("Settings reset");
     });
@@ -170,9 +192,9 @@ Test.closeWalkthrough = function () {
 
 Test.normalStartup = function () {
   printChained(
-    Test.resetSettings(),
-    Test.startTogetherJS(),
-    Test.closeWalkthrough());
+    Test.resetSettings,
+    Test.startTogetherJS,
+    Test.closeWalkthrough);
 };
 
 function printChained() {
@@ -184,7 +206,9 @@ function printChained() {
       done = true;
       return;
     }
-    args[index].then(function () {
+    var f = args[index];
+    if (!f.then) { f = f(); }
+    f.then(function () {
       if (! arguments.length) {
         print("(done)");
       } else {
