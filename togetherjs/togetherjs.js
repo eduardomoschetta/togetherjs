@@ -336,7 +336,9 @@
       "es": "es-BO",
       "es-BO": true,
       "ru": true,
-      "ru-RU": "ru"
+      "ru-RU": "ru",
+      "pt-BR": true,
+      "pt": "pt-BR"
     };
 
     if(lang === undefined) {

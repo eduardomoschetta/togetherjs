@@ -793,8 +793,8 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
     assert(buttons && Math.floor(buttons) == buttons);
     var iface = $("#togetherjs-dock");
     var newHeight = iface.height() + (BUTTON_HEIGHT * buttons);
-    assert(newHeight >= BUTTON_HEIGHT * 3, "Height went too low (", newHeight,
-           "), should never be less than 3 buttons high (", BUTTON_HEIGHT * 3, ")");
+    // assert(newHeight >= BUTTON_HEIGHT * 3, "Height went too low (", newHeight,
+    //        "), should never be less than 3 buttons high (", BUTTON_HEIGHT * 3, ")");
     iface.css({
       height: newHeight + "px"
     });
@@ -1116,7 +1116,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       container = container || ui.container;
       var abbrev = this.peer.name;
       if (this.peer.isSelf) {
-        abbrev = "me";
+        abbrev = templates("me");
       }
       container.find("." + this.peer.className("togetherjs-person-name-")).text(this.peer.name || "");
       container.find("." + this.peer.className("togetherjs-person-name-abbrev-")).text(abbrev);

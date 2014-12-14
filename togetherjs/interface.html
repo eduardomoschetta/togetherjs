@@ -310,21 +310,19 @@
        data-bind-to="#togetherjs-screenshare-button"
        style="display: none">
 
-    <header> Screen sharing </header>
+    <header>{{ gettext('Screen sharing') }}</header>
     <section>
       <p>
-        If you decide to proceed, you will be sharing this site's screen with the attendant
-        so she can watch where you are and what you are interacting with in order to better
-        support you.
+        {{ gettext('screen_sharing_confirm_text') }}
       </p>
       <p>
-        Do you want to proceed?
+        {{ gettext('Do you want to proceed?') }}
       </p>
     </section>
     <section class="togetherjs-buttons">
-      <button class="togetherjs-cancel togetherjs-dismiss">Cancel</button>
-      <span class="togetherjs-alt-text">or</span>
-      <button id="togetherjs-confirm-screenshare" class="togetherjs-default">Confirm</button>
+      <button class="togetherjs-cancel togetherjs-dismiss">{{ gettext('Cancel') }}</button>
+      <span class="togetherjs-alt-text">{{ gettext('or') }}</span>
+      <button id="togetherjs-confirm-screenshare" class="togetherjs-default">{{ gettext('Confirm') }}</button>
     </section>
   </div>
 
@@ -333,19 +331,19 @@
        data-bind-to="#togetherjs-screenshare-button"
        style="display: none">
 
-    <header> Screen sharing </header>
+    <header>{{ gettext('Screen sharing') }}</header>
     <section>
       <p>
-        Your site's screen is already shared with the attendant.
+        {{ gettext('Your site\'s screen is already shared with the attendant.') }}
       </p>
       <p>
-        Do you want to stop sharing your screen?
+        {{ gettext('Do you want to stop sharing your screen?') }}
       </p>
     </section>
     <section class="togetherjs-buttons">
-      <button class="togetherjs-cancel togetherjs-dismiss">Cancel</button>
-      <span class="togetherjs-alt-text">or</span>
-      <button id="togetherjs-stop-screenshare" class="togetherjs-default">Stop</button>
+      <button class="togetherjs-cancel togetherjs-dismiss">{{ gettext('Cancel') }}</button>
+      <span class="togetherjs-alt-text">{{ gettext('or') }}</span>
+      <button id="togetherjs-stop-screenshare" class="togetherjs-default">{{ gettext('Stop') }}</button>
     </section>
   </div>
 

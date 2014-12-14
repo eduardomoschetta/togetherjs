@@ -335,6 +335,7 @@ module.exports = function (grunt) {
         subs.__help_txt__ = translatedHelp;
         subs.__walkthrough_html__ = translatedWalkthrough;
         subs.__names__ = translation.names;
+        subs.__me__ = translation.me || "me";
         templates = substituteContent(templates, subs);
 
         grunt.file.write(dest, templates);
