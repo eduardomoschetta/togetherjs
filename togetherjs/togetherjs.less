@@ -31,7 +31,7 @@
 @side-padding: 0;
 // Background color of most elements:
 @background-color: transparent;
-@window-background-color: transparent;
+@window-background-color: #fff;
 @background-image: url('./images/bg-bw.png');
 @window-color: #000;
 @text-color: #000;
@@ -121,14 +121,14 @@ button[disabled]:hover {
 
 .togetherjs-default {
   .button-style;
-  background:rgb(117,190,233);
-  color: rgb(33,112,177);
+  background: rgb(33,112,177);
+  color: #fff;
+  padding: 0 10px;
   &.togetherjs-follow {
     cursor: pointer;
   }
-
   &:hover {
-    background:darken(rgb(117,190,233),10%);
+    background:darken(rgb(33,112,177),10%);
   }
 }
 
@@ -254,7 +254,7 @@ input.togetherjs-upload-avatar {
     font-variant: normal;
     text-align: center;
     font-family: openSansRegular, Helvetica;
-    color: #fff;
+    color: #666;
     padding: 10px 4px 5px 4px;
     height: (@button-size-height + 8)/2;
     background: transparent;
@@ -433,6 +433,14 @@ input.togetherjs-upload-avatar {
   .togetherjs-subtitle #togetherjs-chat-participant-list {
     font-size:12px;
     color:rgba(255,255,255,0.5);
+  }
+
+  #togetherjs-chat.togetherjs-window {
+    background-color: transparent;
+
+    & > header {
+      color: #fff;
+    }
   }
 
   #togetherjs-chat .togetherjs-subtitle {
