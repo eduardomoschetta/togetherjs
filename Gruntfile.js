@@ -103,7 +103,9 @@ module.exports = function (grunt) {
           //the end user use requirejs.
           wrap: {
             start: "(function() {",
-            end: "TogetherJS.require = TogetherJS._requireObject = require;\nTogetherJS._loaded = true;\nrequire([\"session\"]);\n}());"
+            end: "TogetherJS.require = TogetherJS._requireObject = require;\nTogetherJS._loaded = true;\n" + 
+              "require.config({map: { '*': {'jquery':'jquery-private'}, 'jquery-private': {'jquery':'jquery'} }});\n" +
+              "require([\"session\"]);\n}());"
           },
           optimize: "none",
           out: function writer(text) {
