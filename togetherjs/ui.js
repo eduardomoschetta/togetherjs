@@ -1057,7 +1057,9 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       ui.chat.scroll();
       var doNotify = !! notify;
       if (notify && visibilityApi.hidden()) {
-        ui.container.find("#togetherjs-notification")[0].play();
+        var sound = ui.container.find("#togetherjs-notification")[0];
+        sound.load();
+        sound.play();
       }
       if (container.is(":visible")) {
         doNotify = false;
