@@ -277,7 +277,8 @@ module.exports = function (grunt) {
         __walkthrough_html__: grunt.file.read("togetherjs/walkthrough.html"),
         __baseUrl__: baseUrl,
         __hubUrl__: hubUrl,
-        __gitCommit__: gitCommit
+        __gitCommit__: gitCommit,
+        __toolname__: grunt.option("toolname") || "togetherjs"
       };
 
       function substituteContent(content, s) {

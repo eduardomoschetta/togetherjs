@@ -340,7 +340,8 @@ define(["util", "session", "storage", "require", "templates"], function (util, s
               storage.settings.set("color", color);
             }
             if (! avatar) {
-              avatar = TogetherJS.baseUrl + "/togetherjs/images/default-avatar.png";
+              avatar = TogetherJS.baseUrl + TogetherJS.baseUrlPath + "/images/default-avatar.png";
+              console.log('toto ' + avatar);
             }
             this.update({
               name: name,

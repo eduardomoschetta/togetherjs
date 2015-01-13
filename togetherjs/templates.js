@@ -11,7 +11,7 @@ define(["util", "require"], function (util, require) {
     // Removes <% /* ... */ %> comments:
     t = t.replace(/[<][%]\s*\/\*[\S\s\r\n]*\*\/\s*[%][>]/, "");
     t = util.trim(t);
-    t = t.replace(/http:\/\/localhost:8080/g, TogetherJS.baseUrl);
+    t = t.replace(/http:\/\/localhost:8080\/togetherjs/g, TogetherJS.baseUrl + TogetherJS.baseUrlPath);
     t = t.replace(/TOOL_NAME/g, '<span class="togetherjs-tool-name">BrowserWatch</span>');
     t = t.replace(/SITE_NAME/g, '<strong class="togetherjs-site-name">[site name]</strong>');
     t = t.replace(/TOOL_SITE_LINK/g, '<a href="http://browser.watch/" target="_blank"><span class="togetherjs-tool-name">BrowserWatch</span></a>');

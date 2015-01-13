@@ -90,7 +90,7 @@
     hideParticipants: false
   };
 
-  var styleSheet = "/togetherjs/togetherjs.css";
+  var styleSheet = "/__toolname__/__toolname__.css";
 
   var baseUrl = "__baseUrl__";
   if (baseUrl == "__" + "baseUrl__") {
@@ -183,19 +183,19 @@
     var scripts = document.getElementsByTagName("script");
     for (var i=0; i<scripts.length; i++) {
       var src = scripts[i].src;
-      if (src && src.search(/togetherjs(-min)?.js(\?.*)?$/) !== -1) {
-        baseUrl = src.replace(/\/*togetherjs(-min)?.js(\?.*)?$/, "");
+      if (src && src.search(/__toolname__(-min)?.js(\?.*)?$/) !== -1) {
+        baseUrl = src.replace(/\/*__toolname__(-min)?.js(\?.*)?$/, "");
         console.warn("Detected baseUrl as", baseUrl);
         break;
-      } else if (src && src.search(/togetherjs-min.js(\?.*)?$/) !== -1) {
-        baseUrl = src.replace(/\/*togetherjs-min.js(\?.*)?$/, "");
+      } else if (src && src.search(/__toolname__-min.js(\?.*)?$/) !== -1) {
+        baseUrl = src.replace(/\/*__toolname__-min.js(\?.*)?$/, "");
         console.warn("Detected baseUrl as", baseUrl);
         break;
       }
     }
   }
   if (! baseUrl) {
-    console.warn("Could not determine TogetherJS's baseUrl (looked for a <script> with togetherjs.js and togetherjs-min.js)");
+    console.warn("Could not determine TogetherJS's baseUrl (looked for a <script> with __toolname__.js and __toolname__-min.js)");
   }
 
   function addStyle() {
@@ -384,9 +384,9 @@
       }
     }
     if (min) {
-      addScript("/togetherjs/togetherjsPackage.js");
+      addScript("/__toolname__/__toolname__Package.js");
     } else {
-      addScript("/togetherjs/libs/require.js");
+      addScript("/__toolname__/libs/require.js");
     }
   };
 
@@ -754,6 +754,7 @@
   // FIXME: substitute this on the server (and update make-static-client)
   TogetherJS.version = version;
   TogetherJS.baseUrl = baseUrl;
+  TogetherJS.baseUrlPath = '/__toolname__';
 
   TogetherJS.hub = TogetherJS._mixinEvents({});
 
