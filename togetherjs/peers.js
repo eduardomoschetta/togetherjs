@@ -341,7 +341,6 @@ define(["util", "session", "storage", "require", "templates"], function (util, s
             }
             if (! avatar) {
               avatar = TogetherJS.baseUrl + TogetherJS.baseUrlPath + "/images/default-avatar.png";
-              console.log('toto ' + avatar);
             }
             this.update({
               name: name,

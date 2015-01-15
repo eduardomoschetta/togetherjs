@@ -330,6 +330,9 @@ input.togetherjs-upload-avatar {
     &:hover {
       background-color: rgba(1,1,1,0.1);
     }
+    &.togetherjs-dock-person:hover {
+      background-color: transparent;
+    }
   }
 
   #togetherjs-buttons hr {
@@ -1817,12 +1820,24 @@ section.togetherjs-buttons .togetherjs-same-url {
 /**
  * custom css for browserwatch
  */
-.browserwatch #togetherjs-profile-button {
-  display: none;
-}
-.browserwatch #togetherjs-share-button {
-  display: none;
-}
-.browserwatch #togetherjs-audio-button {
-  display: none;
+.browserwatch {
+  #togetherjs-profile-button {
+    display: none;
+  }
+  #togetherjs-share-button {
+    display: none;
+  }
+  #togetherjs-audio-button {
+    display: none;
+  }
+  #togetherjs-participant-placeholder {
+    border-top: 1px solid rgba(0, 0, 0, 0.2);
+    span {
+      margin: 10px 0;
+      height: @button-size-height;
+      display: block;
+      opacity: 0.5;
+      background: url('./images/default-avatar.png') no-repeat center center;
+    }
+  }
 }

@@ -1215,9 +1215,10 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         if (!TogetherJS.getConfig("hideParticipants")) {
           if (this.peer.status == "live") {
             this.dock();
-          } else {
+          } /* don't undock... let's the avatar be updated with disabled effect only
+          else {
             this.undock();
-          }
+          }*/
         }
       }
       this.updateDisplay();
@@ -1293,6 +1294,8 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       ui.container.find("#togetherjs-dock-participants").append(this.dockElement);
       this.dockElement.find(".togetherjs-person").animateDockEntry();
       adjustDockSize(1);
+      
+      /* disable this functionality
       this.detailElement = templating.sub("participant-window", {
         peer: this.peer
       });
@@ -1334,7 +1337,9 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         }
       }).bind(this));
       this.updateFollow();
-      session.emit('dock-element');
+      */
+     
+      session.emit('dock-participant');
     }),
 
     undock: function () {
@@ -1348,7 +1353,7 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
           this.detailElement.remove();
         this.detailElement = null;
         adjustDockSize(-1);
-        session.emit('undock-element');
+        session.emit('undock-participant');
       }).bind(this));
     },
 

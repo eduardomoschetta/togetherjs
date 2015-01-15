@@ -226,7 +226,7 @@ define(["jquery", "util", "peers", "session"], function ($, util, peers, session
     bindEvents(el);
   });
 
-  session.on("dock-element undock-element", resizeWindow);
+  session.on("dock-participant undock-participant", resizeWindow);
 
   return windowing;
 });
