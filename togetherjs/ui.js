@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-define(["require", "jquery", "util", "session", "templates", "templating", "linkify", "peers", "windowing", "tinycolor", "elementFinder", "visibilityApi"], function (require, $, util, session, templates, templating, linkify, peers, windowing, tinycolor, elementFinder, visibilityApi) {
+define(["require", "jquery", "util", "session", "templates", "templating", "linkify", "peers", "windowing", "tinycolor", "elementFinder", "visibilityApi", "notificationsApi"], function (require, $, util, session, templates, templating, linkify, peers, windowing, tinycolor, elementFinder, visibilityApi, notificationsApi) {
   var ui = util.Module('ui');
   var assert = util.assert;
   var AssertionError = util.AssertionError;
@@ -234,6 +234,31 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         return false;
       }
     });
+
+    // Enable desktop notifications?
+    if (notificationsApi.isSupported()) {
+      container.find('#togetherjs-chat-enable-notification-box')
+        .show()
+        .each(function() {
+          var checkbox = $('[type=checkbox]', this);
+          // Initialize checkbox
+          notificationsApi.isEnabled().then(function(enabled) {
+            checkbox.prop('checked', enabled);
+          });
+          // Handle click
+          checkbox.on('change', function() {
+            var userChecked = checkbox.prop('checked');
+            if (userChecked) {
+              notificationsApi.enable().then(function(ok) {
+                if (!ok)
+                  checkbox.prop('checked', false);
+              });
+            } else {
+              notificationsApi.disable();
+            }
+          });
+        });
+    }
 
     function submitChat() {
       var val = input.val();
@@ -1060,11 +1085,17 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
         var sound = ui.container.find("#togetherjs-notification")[0];
         sound.load();
         sound.play();
+
+        notificationsApi.isEnabled().then(function(enabled) {
+          if (!enabled)
+            return;
+          var notificationText = el.find('.togetherjs-chat-content:visible, .togetherjs-inline-text:visible').text();
+          // remove extra white spaces
+          notificationText = notificationText.replace(/\s+/g, ' ');
+          notificationsApi.send({body: notificationText});
+        });
       }
-      if (container.is(":visible")) {
-        doNotify = false;
-      }
-      if (doNotify) {
+      if (doNotify && !container.is(":visible")) {
         windowing.show(chatWindow);
       }
     }),

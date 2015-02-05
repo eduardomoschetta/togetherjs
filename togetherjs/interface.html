@@ -219,12 +219,14 @@
       <!-- Template for when someone goes to a new URL: -->
       <div id="togetherjs-template-url-change" class="togetherjs-chat-item togetherjs-chat-url-change">
         <div class="togetherjs-person"></div>
-        <div class="togetherjs-inline-text">
-          <div class="togetherjs-if-sameUrl">
+        <div class="togetherjs-if-sameUrl">
+          <div class="togetherjs-inline-text">
             <span class="togetherjs-person-name"></span>
             {{ gettext('is on the same page as you.') }}
           </div>
-          <div class="togetherjs-ifnot-sameUrl">
+        </div>
+        <div class="togetherjs-ifnot-sameUrl">
+          <div class="togetherjs-inline-text">
             <span class="togetherjs-person-name"></span>
             {{ gettext('has gone to:') }} <a href="#" class="togetherjs-person-url togetherjs-person-url-title" target="_blank"></a>
             <section class="togetherjs-buttons togetherjs-buttons-notification-diff-url">
@@ -239,7 +241,6 @@
               <a class="togetherjs-nudge togetherjs-secondary">Nudge them</a>
               <a href="" class="togetherjs-person-url togetherjs-follow togetherjs-primary">Join them</a>
             </div> -->
-
           </div>
         </div>
         <div class="togetherjs-clear"></div>
@@ -251,6 +252,12 @@
     </section>
     <section id="togetherjs-chat-input-box">
       <textarea id="togetherjs-chat-input" placeholder="{{ gettext('Type your message here') }}"></textarea>
+    </section>
+    <section id="togetherjs-chat-enable-notification-box" style="display:none;">
+      <label style="display:inline;">
+        <input type="checkbox" id="togetherjs-chat-enable-notification"> 
+        {{ gettext('Enable desktop notifications') }}
+      </label>
     </section>
   </div>
 

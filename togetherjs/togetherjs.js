@@ -87,7 +87,9 @@
     // If not null, it allows an additional class to be added to UI container
     addContainerClass: null,
     // If true, we will hide participants dock and their details
-    hideParticipants: false
+    hideParticipants: false,
+    // If true, a checkbox to enable desktop notifications will be displayed
+    allowDesktopNotifications: false
   };
 
   var styleSheet = "/__toolname__/__toolname__.css";
