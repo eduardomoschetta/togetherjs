@@ -345,7 +345,8 @@
 
     if(lang === undefined) {
       // BCP 47 mandates hyphens, not underscores, to separate lang parts
-      lang = navigator.language.replace(/_/g, "-");
+      var userLanguage = navigator.userLanguage || navigator.language;
+      lang = userLanguage.replace(/_/g, "-");
     }
     if (/-/.test(lang) && !availableTranslations[lang]) {
       lang = lang.replace(/-.*$/, '');
