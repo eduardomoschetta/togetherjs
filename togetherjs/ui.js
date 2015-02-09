@@ -1082,9 +1082,8 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       ui.chat.scroll();
       var doNotify = !! notify;
       if (notify && visibilityApi.hidden()) {
-        var sound = ui.container.find("#togetherjs-notification")[0];
-        sound.load();
-        sound.play();
+        
+        ui.playNotificationSound();
 
         notificationsApi.isEnabled().then(function(enabled) {
           if (!enabled)
@@ -1580,6 +1579,19 @@ define(["require", "jquery", "util", "session", "templates", "templating", "link
       setToolName = true;
     }
   };
+
+  ui.playNotificationSound = function() {
+    var detectLib = TogetherJS.getConfig('detectLib');
+    var format = 'ogg';
+    if (!detectLib.test('audio', 'ogg') && detectLib.test('audio', 'mp3')) {
+      format = 'mp3';
+    }
+    var sound = $('#togetherjs-notification-' + format);
+    if (sound.length) {
+      sound[0].load();
+      sound[0].play();
+    }
+  }
 
   TogetherJS.config.track("toolName", function (name) {
     ui.updateToolName(ui.container);

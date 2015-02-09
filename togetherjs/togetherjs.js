@@ -89,7 +89,11 @@
     // If true, we will hide participants dock and their details
     hideParticipants: false,
     // If true, a checkbox to enable desktop notifications will be displayed
-    allowDesktopNotifications: false
+    allowDesktopNotifications: false,
+    // External feature detection lib (by default, always return true for any test)
+    detectLib: {
+      test: function() { return true; }
+    }
   };
 
   var styleSheet = "/__toolname__/__toolname__.css";
